@@ -1,20 +1,18 @@
 {-# Language NoMonomorphismRestriction #-}
 {-# Language RecordWildCards           #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module StylishCabal where
+module StylishCabal (prettify) where
 
-import           Control.Monad
 import           Data.Char
 import           Data.IORef
 import           Data.List
+import Debug.Trace
 import           Data.List.Split
 import           Data.Maybe
 import           Data.Monoid                            ((<>))
-import           Data.Ord
-import           Data.Version                           hiding (showVersion)
-import           Debug.Trace
 import           Distribution.License
-import           Distribution.ModuleName                (components)
+import           Distribution.ModuleName                (components, ModuleName)
 import           Distribution.Package
 import           Distribution.PackageDescription
 import           Distribution.PackageDescription.Parse
@@ -25,10 +23,7 @@ import           Distribution.Types.UnqualComponentName
 import           Distribution.Verbosity
 import           Distribution.Version
 import           Field
-import           Field
 import           Language.Haskell.Extension
-import           System.Environment
-import           System.IO
 import           Text.PrettyPrint.Leijen                hiding ((<$>), (<>))
 import qualified Text.PrettyPrint.Leijen                as L
 
@@ -37,14 +32,14 @@ instance Monoid Doc where
     mappend = (L.<>)
 
 prettify :: String -> Int -> IO String
-prettify input width = do
-    writeIORef wideness width
+prettify input width' = do
+    writeIORef wideness width'
     gpd <- do
         let res = parseGenericPackageDescription input
         case res of
             ParseFailed e -> do
-                let (line, message) = locatedErrorMsg e
-                dieWithLocation "<input>" line message
+                let (line', message) = locatedErrorMsg e
+                dieWithLocation' normal "<input>" line' message
             ParseOk warnings x -> do
                 mapM_ (warn normal . showPWarning "<input>") $ reverse warnings
                 return x
@@ -52,7 +47,7 @@ prettify input width = do
         header = renderFields (renderPackageDesc pd)
         blocks = concat
             [ map renderSourceRepo (sourceRepos pd)
-            , map renderFlags (genPackageFlags gpd)
+            , map renderFlag (genPackageFlags gpd)
             , maybeToList $ renderLibrary <$> condLibrary gpd
             , map (uncurry renderExe) (condExecutables gpd)
             , map (uncurry renderTest) (condTestSuites gpd)
@@ -61,21 +56,23 @@ prettify input width = do
         doc = vcat . intersperse L.empty
             $ header : map render blocks
 
-    return $ displayS (renderPretty 1.0 width $ doc <> line) ""
+    return $ displayS (renderPretty 1.0 width' $ doc <> line) ""
 
+renderSetupBuildInfo :: SetupBuildInfo -> Block
 renderSetupBuildInfo SetupBuildInfo{..} = Block
     (string "custom-setup")
     [mkField "setup-depends" setupDepends
         (not . null)
         (tokens . sort . map showDependency) ]
 
+renderSourceRepo :: SourceRepo -> Block
 renderSourceRepo SourceRepo{..} = Block
     (string "source-repository" <+> showKind repoKind)
     [ maybeField "type" repoType (string . showType)
     , maybeField "location" repoLocation string
-    , maybeField "subdir" repoSubdir fpToDoc
-    , maybeField "tag" repoTag fpToDoc
-    , maybeField "branch" repoBranch fpToDoc
+    , maybeField "subdir" repoSubdir filepathToDoc
+    , maybeField "tag" repoTag filepathToDoc
+    , maybeField "branch" repoBranch filepathToDoc
     ]
     where
         showKind RepoHead = string "head"
@@ -84,6 +81,7 @@ renderSourceRepo SourceRepo{..} = Block
         showType (OtherRepoType n) = n
         showType x                 = map toLower $ show x
 
+renderPackageDesc :: PackageDescription -> [Thing]
 renderPackageDesc pd@PackageDescription{..} =
     [ mkField' "name" (pkgName package) (string . unPackageName)
     , mkField' "version" (pkgVersion package) (string . showVersion)
@@ -117,12 +115,10 @@ renderPackageDesc pd@PackageDescription{..} =
     ] ++ map (\ (f,v) -> mkField' f v string) customFieldsPD
     where
         license' []  = noField
-        license' [l] = Field "license-file" True (Left $ fpToDoc l)
+        license' [l] = Field "license-file" True (Left $ filepathToDoc l)
         license' ls  = Field "license-files" True (Left $ tokens ls)
-        replaceNl ('\n':'\n':xs) = '\n':'.':replaceNl ('\n':xs)
-        replaceNl (x:xs)         = x:replaceNl xs
-        replaceNl []             = []
 
+normalizeDescription :: String -> Doc
 normalizeDescription str = desc where
     chunks'' = splitOn "\n\n" str
     chunks' = map (strip . map (\ c -> if c == '\n' then ' ' else c)) chunks''
@@ -130,54 +126,62 @@ normalizeDescription str = desc where
     chunks = map (fillSep . map text . words) chunks'
     desc = vsep $ intersperse (string ".") chunks
 
+renderTestedWith :: Show a => [(a, VersionRange)] -> Doc
 renderTestedWith = fillSep . punctuate comma
-    . map (\ (compiler, vers) ->
-        string $ showDependency $ Dependency (mkPackageName (show compiler)) vers)
+    . map (\ (compiler, vers) -> string $ showVersioned (show compiler, vers))
 
-nonempty = nonempty' string
-nonempty' f x y
-    | null y = Nothing
-    | otherwise = Just (x, f y)
-
-showish = fish show
-
-fish f n x = (,) n . string . f <$> x
-
--- plusConds components getBuildInfo
---     | null components = id
---     | otherwise = (<$$> vsep (empty : intersperse empty (map (renderComponent getBuildInfo) components)))
-
+renderNodes :: Foldable t
+            => (a -> BuildInfo)
+            -> (a -> [Thing])
+            -> t (CondBranch ConfVar c a)
+            -> [Thing]
 renderNodes f renderMore cs = concatMap (renderCondNode f renderMore) cs
 
+renderExe :: UnqualComponentName -> CondTree ConfVar c Executable -> Block
 renderExe exeName CondNode{..} = Block
     (string "executable" <+> string (unUnqualComponentName exeName))
-    (renderExeData condTreeData ++ renderNodes buildInfo renderExeData condTreeComponents)
+    (renderExeData condTreeData
+  ++ showBuildInfo (buildInfo condTreeData)
+  ++ renderNodes buildInfo renderExeData condTreeComponents)
 
+renderLibrary :: Show c => CondTree ConfVar c Library -> Block
 renderLibrary CondNode{..} = Block
     (string "library")
-    (renderLibData condTreeData ++ renderNodes libBuildInfo renderLibData condTreeComponents)
+    (renderLibData condTreeData
+  ++ showBuildInfo (libBuildInfo condTreeData)
+  ++ renderNodes libBuildInfo renderLibData condTreeComponents)
 
+renderTest :: UnqualComponentName -> CondTree ConfVar c TestSuite -> Block
 renderTest testName CondNode{..} = Block
     (string "test-suite" <+> string (unUnqualComponentName testName))
-    (renderTestData condTreeData ++ renderNodes testBuildInfo renderTestData condTreeComponents)
+    (renderTestData condTreeData
+  ++ showBuildInfo (testBuildInfo condTreeData)
+  ++ renderNodes testBuildInfo renderTestData condTreeComponents)
 
+renderExeData :: Executable -> [Thing]
 renderExeData Executable{..} =
     [ mkNonempty "main-is" modulePath string ]
 
+renderLibData :: Library -> [Thing]
 renderLibData Library{..} =
     [ mkNonempty "exposed-modules" exposedModules modules' ]
 
+renderTestData :: TestSuite -> [Thing]
 renderTestData TestSuite{..} = case testInterface of
-    TestSuiteExeV10 v f -> [ mkField' "type" "exitcode-stdio-1.0" string
+    TestSuiteExeV10 _ f -> [ mkField' "type" "exitcode-stdio-1.0" string
                            , mkField' "main-is" f string
                            ]
-    TestSuiteLibV09 v m -> [ mkField' "type" "detailed-0.9" string
+    TestSuiteLibV09 _ m -> [ mkField' "type" "detailed-0.9" string
                            , mkField' "test-module" m (string . intercalate "." . components)
                            ]
     TestSuiteUnsupported _ -> []
 
-renderCondNode getBuildInfo extra (CondBranch pred branch1 branch2) =
-    [ ThingB $ Block (string "if" <+> showPredicate pred)
+renderCondNode :: (a -> BuildInfo)
+               -> (a -> [Thing])
+               -> CondBranch ConfVar c a
+               -> [Thing]
+renderCondNode getBuildInfo extra (CondBranch pred' branch1 branch2) =
+    [ ThingB $ Block (string "if" <+> showPredicate pred')
         (extra (condTreeData branch1)
       ++ showBuildInfo (getBuildInfo $ condTreeData branch1)
       ++ renderNodes getBuildInfo extra (condTreeComponents branch1)) ]
@@ -187,18 +191,21 @@ renderCondNode getBuildInfo extra (CondBranch pred branch1 branch2) =
           ++ showBuildInfo (getBuildInfo $ condTreeData b2)
           ++ renderNodes getBuildInfo extra (condTreeComponents b2)))
 
+showPredicate :: Condition ConfVar -> Doc
 showPredicate (Var x)    = showVar x
 showPredicate (CNot p)   = string "!" <> showPredicate p
 showPredicate (CAnd a b) = showPredicate a <+> string "&&" <+> showPredicate b
 showPredicate (COr a b)  = showPredicate a <+> string "||" <+> showPredicate b
 showPredicate (Lit b)    = string $ show b
 
+showVar :: ConfVar -> Doc
 showVar (Impl compiler vers) = string "impl" <> parens (string $
-    (showDependency (Dependency (mkPackageName (map toLower $ show compiler)) vers)))
+    (showVersioned (map toLower $ show compiler, vers)))
 showVar (Flag f) = string "flag" <> parens (string (unFlagName f))
 showVar (OS w) = string "os" <> parens (string $ map toLower $ show w)
 showVar (Arch a) = string "arch" <> parens (string $ map toLower $ show a)
 
+showBuildInfo :: BuildInfo -> [Thing]
 showBuildInfo BuildInfo{..} = if any (\ (ThingF f) -> fFilter f) defaults
     then defaults
     -- hack: rarely if ever do we want to render an empty build-info
@@ -209,13 +216,13 @@ showBuildInfo BuildInfo{..} = if any (\ (ThingF f) -> fFilter f) defaults
     else [ mkField' "buildable" buildable (string . show) ]
     where
         defaults =
-            [ mkNonempty "hs-source-dirs" hsSourceDirs files
+            [ mkNonempty "other-modules" otherModules modules'
+            , mkNonempty "hs-source-dirs" hsSourceDirs files
             , maybeField "default-language" defaultLanguage (string . show)
             , mkNonempty "default-extensions" defaultExtensions (tokens . sort . map showExtension . sort)
             , mkNonempty "build-depends" targetBuildDepends (tokens . map showDependency . sort)
             , mkNonempty "extensions" oldExtensions (tokens . sort . map showExtension . sort)
             , mkNonempty "cpp-options" cppOptions tokens'
-            , mkNonempty "other-modules" otherModules modules'
             , mkNonempty "extra-libraries" extraLibs tokens
             , mkNonempty "frameworks" frameworks tokens
             , mkNonempty "other-extensions" otherExtensions (modules showExtension)
@@ -225,37 +232,41 @@ showBuildInfo BuildInfo{..} = if any (\ (ThingF f) -> fFilter f) defaults
             , mkNonempty "include-dirs" includeDirs files
             ]
 
+renderOption :: Show a => (a, [String]) -> Thing
 renderOption (f, args) = mkField'
     (map toLower (show f) ++ "-options")
     args
     tokens'
 
+modules' :: [ModuleName] -> Doc
 modules' = modules (intercalate "." . components)
 
+modules :: (a -> String) -> [a] -> Doc
 modules f mnames = align $ vcat $ map string $ sort $ map f mnames
 
 -- showOptions
 
+tokens :: [String] -> Doc
 tokens = fillSep . punctuate comma . map string
+tokens' :: [String] -> Doc
 tokens' = fillSep . map string
 
-files = fillSep . punctuate comma . map fpToDoc
+files :: [String] -> Doc
+files = fillSep . punctuate comma . map filepathToDoc
 
-fpToDoc x
+filepathToDoc :: String -> Doc
+filepathToDoc x
     | null x = string "\"\""
     | any isSpace x = string $ show x
     | otherwise = string x
 
-values vs = vcat $ map (\ (x,y) -> showPair x y) $ vs
-    where
-        (xs, ys) = unzip vs
-        width = foldr max 0 (map length xs) + 2
-        showPair "description" desc = string "description:" L.<$> indent 2 desc
-        showPair x y = fill width (string x <> colon) <> align y
+showDependency :: Dependency -> String
+showDependency (Dependency pn v) = showVersioned (unPackageName pn, v)
 
-showDependency (Dependency pn v)
-    | v == anyVersion = unPackageName pn
-    | otherwise = unPackageName pn ++ " " ++
+showVersioned :: (String, VersionRange) -> String
+showVersioned (pn, v')
+    | v' == anyVersion = pn
+    | otherwise = pn ++ " " ++
         foldVersionRange' ""
             (\ v -> "== " ++ showVersion v)
             (\ v -> "> " ++ showVersion v)
@@ -267,17 +278,20 @@ showDependency (Dependency pn v)
             (\ a b -> a ++ " || " ++ b)
             (\ a b -> a ++ " && " ++ b)
             (\ a -> "(" ++ a ++ ")")
-            v
+            v'
 
+showExtension :: Extension -> String
 showExtension (EnableExtension s)  = show s
 showExtension (DisableExtension s) = "No" ++ show s
+showExtension x = error $ show x
 
 instance Ord Dependency where
     compare (Dependency p _) _ | unPackageName p == "base" = LT
     compare _ (Dependency p _) | unPackageName p == "base" = GT
     compare (Dependency d1 _) (Dependency d2 _)   = compare d1 d2
 
-renderFlags MkFlag{..} = Block
+renderFlag :: Flag -> Block
+renderFlag MkFlag{..} = Block
     (string "flag" <+> string fname)
     [ mkField' "default" flagDefault (string . show)
     , mkField "manual" (string "True") (const flagManual) id
@@ -285,6 +299,7 @@ renderFlags MkFlag{..} = Block
     ]
     where fname = unFlagName flagName
 
+showLicense :: License -> String
 showLicense MIT          = "MIT"
 showLicense BSD2         = "BSD2"
 showLicense BSD3         = "BSD3"
@@ -299,5 +314,6 @@ showLicense (Apache v)   = showL "Apache" v
 showLicense OtherLicense = "OtherLicense"
 showLicense x            = error $ show x
 
+showL :: String -> Maybe Version -> String
 showL s Nothing  = s
 showL s (Just v) = s ++ "-" ++ showVersion v

@@ -8,13 +8,13 @@ import Data.Monoid
 import Options.Applicative
 import StylishCabal
 import System.IO
-import Text.PrettyPrint.Leijen (displayIO)
 
 data Opts = Opts
           { file  :: FilePath
           , width :: Int
           } deriving Show
 
+opts :: Parser Opts
 opts = Opts
     <$> strArgument (metavar "FILE" <> help "Input file")
     <*> option auto

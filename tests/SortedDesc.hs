@@ -1,11 +1,11 @@
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# Language NamedFieldPuns     #-}
 {-# Language RecordWildCards    #-}
 {-# Language StandaloneDeriving #-}
 {-# Language TypeFamilies       #-}
 
-module SortedDesc where
+module SortedDesc (from, SGenericPackageDescription) where
 
-import           Data.Map                               (Map)
 import           Data.Set                               (Set)
 import qualified Data.Set                               as S
 import           Distribution.Compiler
@@ -254,7 +254,7 @@ instance Convert SBuildInfo where
         , sharedOptions = S.fromList $ map (fmap S.fromList) sharedOptions
         , customFieldsBI = S.fromList customFieldsBI
         , targetBuildDepends = S.fromList targetBuildDepends
-        -- , targetBuildRenaming = targetBuildRenaming
+        , mixins = S.fromList mixins
         }
 
 deriving instance Ord Flag
