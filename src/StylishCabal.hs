@@ -6,12 +6,10 @@ module StylishCabal (prettify, FormatOpts(..)) where
 
 import           Control.Monad.Reader
 import           Data.Char
-import           Data.IORef
 import           Data.List
 import           Data.List.Split
 import           Data.Maybe
 import           Data.Monoid                            ((<>))
-import           Debug.Trace
 import           Distribution.License
 import           Distribution.ModuleName                (ModuleName, components)
 import           Distribution.Package
@@ -209,6 +207,7 @@ renderCondNode getBuildInfo extra (CondBranch pred' branch1 branch2) = do
                 return $ b ++ bi ++ ns)
     return $ map ThingB $ b1 : maybeToList b2
 
+(<++>) :: Monad m => m [a] -> m [a] -> m [a]
 (<++>) = liftM2 (++)
 
 showPredicate :: Condition ConfVar -> Doc

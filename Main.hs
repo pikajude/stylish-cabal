@@ -6,7 +6,6 @@ module Main where
 import Data.Monoid
 import Options.Applicative
 import StylishCabal
-import System.IO
 
 data Opts = Opts
           { file       :: FilePath

@@ -20,7 +20,6 @@ import           GHC.Generics
 import           Network.Wreq
 import           SortedDesc
 import           StylishCabal
-import           System.IO
 import           Test.Hspec                            (hspec, it)
 import           Test.Hspec.Expectations.Pretty
 
