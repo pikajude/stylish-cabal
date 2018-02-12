@@ -50,6 +50,7 @@ data Block = Block
 
 data Thing
     = ThingF Field
+    | ThingF' Field -- field with no trailing colon
     | ThingB Block
     deriving (Show)
 

@@ -9,6 +9,7 @@ module StylishCabal
     ) where
 
 import Control.Monad.Reader
+import Debug.Trace
 import Data.Char
 import Data.List
 import Data.List.Split
@@ -395,7 +396,7 @@ buildDependsField deps' = do
     return $
         ThingF $
         Field "build-depends" (not $ null deps) $
-        Right $ \width' key ->
+        Right $ \width' key -> traceShow (short, width') $
             if length (show short) + width' <= pw
                 then fill width' key <> align short
                 else fill (width' - 2) key <> align long
@@ -404,7 +405,7 @@ buildDependsField deps' = do
     len = maximum $ map (\(Dependency pn _) -> length $ unPackageName pn) deps
     short = cat $ punctuate (comma <> space) (map (string . showDependency) deps)
     long =
-        encloseSep (string "  ") empty (comma <+> empty) $
+        encloseSep (string ": ") empty (comma <+> empty) $
         map
             (\(Dependency pn v) ->
                  either
