@@ -24,6 +24,11 @@ fieldValueToDoc _ k (Field _ n) = colon <> indent (k + 1) (align $ val' n)
     val' (Str x) = string x
     val' (File x) = filepath x
     val' (Version v) = string $ showVersion v
+    val' (CabalVersion v)
+        -- up until Cabal 1.10, we have to specify '>=' with cabal-version
+        | withinRange v (orEarlierVersion (mkVersion [1, 10])) =
+            renderVersion $ orLaterVersion v
+        | otherwise = string $ showVersion v
     val' (License l) = string $ showLicense l
     val' (TestedWith ts) = renderTestedWith ts
     val' (LongList fs) = vcat $ map filepath fs
@@ -86,7 +91,8 @@ renderBlock n (Block t fs blocks) =
     indent n (align $ blockBodyToDoc n fs blocks)
 
 blockBodyToDoc n fs blocks =
-    fieldsToDoc n
+    fieldsToDoc
+        n
         (if null fs'
              then buildable'
              else fs') <>

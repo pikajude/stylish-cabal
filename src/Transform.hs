@@ -72,7 +72,7 @@ pdToFields pd@PackageDescription {..} =
     , nonEmpty (longList "extra-doc-files") extraDocFiles
     , nonEmpty (longList "data-files") dataFiles
     , nonEmpty (stringField "data-dir") dataDir
-    , version "cabal-version" (specVersion pd)
+    , cabalVersion "cabal-version" (specVersion pd)
     ] ++
     map (uncurry stringField) customFieldsPD
   where

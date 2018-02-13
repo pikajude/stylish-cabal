@@ -1,5 +1,6 @@
 name:               stylish-cabal
 version:            0.1.0.0
+synopsis:           Format Cabal files
 description:        A tool for nicely formatting your Cabal file.
 license:            BSD3
 license-file:       LICENSE
@@ -8,7 +9,11 @@ maintainer:         me@jude.xyz
 category:           Language
 build-type:         Simple
 extra-source-files: ChangeLog.md
-cabal-version:      1.10
+cabal-version:      >=1.10
+
+source-repository head
+  type:     git
+  location: https://github.com/pikajude/stylish-cabal.git
 
 flag exhaustive-check
   default:     False
@@ -29,8 +34,9 @@ library
   ghc-options:      -Wall -Wno-missing-signatures
 
 executable stylish-cabal
-  main-is:       Main.hs
-  build-depends: base, ansi-wl-pprint, optparse-applicative, stylish-cabal
+  main-is:          Main.hs
+  default-language: Haskell2010
+  build-depends:    base, ansi-wl-pprint, optparse-applicative, stylish-cabal
 
 test-suite brute-force
   type:             exitcode-stdio-1.0

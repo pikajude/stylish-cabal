@@ -13,6 +13,7 @@ module Types.Field
     , module_
     , desc
     , version
+    , cabalVersion
     , longList
     , testedField
     , licenseField
@@ -32,6 +33,7 @@ import Language.Haskell.Extension
 data FieldVal
     = Dependencies [Dependency]
     | Version Version
+    | CabalVersion Version
     | License License
     | Str String
     | File String
@@ -65,6 +67,8 @@ longList n as = Just $ Field n (LongList as)
 extensions n as = Just $ Field n (Extensions as)
 
 version n a = Just $ Field n (Version a)
+
+cabalVersion n a = Just $ Field n (CabalVersion a)
 
 modules n as = Just $ Field n (Modules as)
 
