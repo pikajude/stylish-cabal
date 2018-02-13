@@ -1,13 +1,16 @@
-module Parse where
+module Parse (parse) where
 
 import Distribution.PackageDescription.Parse
+import Distribution.ParseUtils
+import Distribution.Simple.Utils
+import Distribution.Verbosity
 
 parse input = do
     let res = parseGenericPackageDescription input
     case res of
         ParseFailed e -> do
             let (line', message) = locatedErrorMsg e
-            liftIO $ dieWithLocation' normal "<input>" line' message
+            dieWithLocation' normal "<input>" line' message
         ParseOk warnings x -> do
-            mapM_ (liftIO . warn normal . showPWarning "<input>") $ reverse warnings
+            mapM_ (warn normal . showPWarning "<input>") $ reverse warnings
             return x

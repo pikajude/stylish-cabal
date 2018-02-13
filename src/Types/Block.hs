@@ -1,22 +1,26 @@
 module Types.Block where
 
-import Text.PrettyPrint.ANSI.Leijen
-import Data.Either
+import Distribution.PackageDescription
 import Types.Field
 
-type File = Blocks
+type File c = ([Maybe Field], [Block c])
 
-type Blocks = [Block]
+data Block c = Block
+    { title :: BlockHead c
+    , fields :: [Maybe Field]
+    , subBlocks :: [Block c]
+    }
+    deriving Show
 
-data Block
-    = Block Doc
-            Blocks
-    | Field Field
-    deriving (Show)
+data BlockHead c = If (Condition c)
+                 | Else
+                 | Benchmark_ String
+                 | TestSuite_ String
+                 | Exe_ String
+                 | Library_
+                 | Flag_ String
+                 | CustomSetup
+                 deriving Show
 
-splitBlocks =
-    partitionEithers .
-    map (\b ->
-             case b of
-                 Field f -> Left f
-                 Block d bs -> Right (d, bs))
+isElse Else = True
+isElse _ = False

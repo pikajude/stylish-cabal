@@ -1,4 +1,0 @@
-name: example
-
-library
-    build-depends: base, text, criterion, attoparsec, lens, bytestring, hspec, HUnit, QuickCheck, persistent
