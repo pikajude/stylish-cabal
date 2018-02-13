@@ -2,22 +2,13 @@
 
 module StylishCabal where
 
-import System.IO
-import Text.PrettyPrint.ANSI.Leijen
+import Data.Monoid
+import Text.PrettyPrint.ANSI.Leijen (line)
 
 import Parse
 import Render
 import Transform
 
-data Opts = Opts
-    { file :: Maybe FilePath
-    , inPlace :: Bool
-    , color :: Bool
-    , width :: Int
-    , indent :: Int
-    } deriving (Show)
-
-pretty Opts{..} str = do
+pretty i str = do
     m <- parse str
-    let doc = uncurry (blockBodyToDoc indent) (toBlocks m) <> line
-    return $ renderPretty 1.0 width $ if color then doc else plain doc
+    return $ uncurry (blockBodyToDoc i) (toBlocks m) <> line
