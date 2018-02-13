@@ -1,5 +1,3 @@
-{-# Language RecordWildCards #-}
-
 module StylishCabal where
 
 import Data.Monoid

@@ -25,7 +25,7 @@ import StylishCabal
 import System.IO
 import Test.Hspec (hspec, it)
 import Test.Hspec.Expectations.Pretty
-import Text.PrettyPrint.ANSI.Leijen (displayS)
+import Text.PrettyPrint.ANSI.Leijen (displayS, renderPretty, plain)
 
 newtype GetPackage = GetPackage
     { packageName :: String
@@ -41,7 +41,7 @@ instance FromJSON GetPackage
 
 instance FromJSON GetRevision
 
-data Options = Options
+newtype Options = Options
     { skip :: Int
     }
 
@@ -57,9 +57,9 @@ getJson x =
     asJSON =<< getWith (defaults & header "Accept" .~ ["application/json"]) x
 
 main :: IO ()
-main = do
-    opts <- execParser $ info (optparse <**> helper) fullDesc
-    hspec $
+main =
+    execParser (info (optparse <**> helper) fullDesc) >>= \opts ->
+        hspec $
         it "brute-force" $ do
             packages' <- getJson "http://hackage.haskell.org/packages/"
             let packages = drop (skip opts) packages'
@@ -84,10 +84,8 @@ main = do
                             pname ++ "/revision/" ++ show (number recent) ++ ".cabal"
                         let cabalStr = toString $ view responseBody cabalFile
                         (do p <-
-                                (`displayS` "") <$>
-                                pretty
-                                    Opts {color = False, width = 90, indent = 2}
-                                    cabalStr
+                                (`displayS` "") . renderPretty 1.0 80 . plain <$>
+                                pretty 2 cabalStr
                         -- parsing the original package description should yield the
                         -- same result as parsing the formatted one
                             shouldBe
