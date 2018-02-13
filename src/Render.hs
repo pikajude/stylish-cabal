@@ -17,34 +17,35 @@ import Render.Lib
 import Types.Block
 import Types.Field
 
-fieldValueToDoc k (Field _ (Dependencies ds)) =
+fieldValueToDoc _ k (Field _ (Dependencies ds)) =
     buildDepsToDoc k $ map (\(Dependency pn v) -> (P $ unPackageName pn, v)) ds
-fieldValueToDoc k (Field _ n) = colon <> indent (k + 1) (align $ val' n)
+fieldValueToDoc _ k (Field _ n) = colon <> indent (k + 1) (align $ val' n)
   where
     val' (Str x) = string x
+    val' (File x) = filepath x
     val' (Version v) = string $ showVersion v
     val' (License l) = string $ showLicense l
     val' (TestedWith ts) = renderTestedWith ts
     val' (LongList fs) = vcat $ map filepath fs
-    val' (Commas fs) = fillSep $ punctuate comma $ map string fs
-    val' (Spaces ls) = fillSep $ map string ls
+    val' (Commas fs) = fillSep $ punctuate comma $ map filepath fs
+    val' (Spaces ls) = fillSep $ map filepath ls
     val' (Modules ms) = vcat $ map moduleDoc $ sort ms
     val' (Module m) = moduleDoc m
     val' (Extensions es) = val' (LongList $ map showExtension es)
     val' Dependencies {} = error "nonsense"
-fieldValueToDoc k (Description s) = descriptionToDoc k s
+fieldValueToDoc n k (Description s) = descriptionToDoc n k s
 
-descriptionToDoc k s =
+descriptionToDoc n k s =
     (<>) colon $
-    nest 2 $
+    nest n $
     case paragraphs of
         [p]
             -- i still don't know what this does
          ->
-            group
-                (flatAlt
-                     (linebreak <> fillSep (map text $ words p))
-                     (indent (k + 1) (string p)))
+            group $
+            flatAlt
+                (linebreak <> fillSep (map text $ words p))
+                (indent (k + 1) (string p))
         xs -> line <> vcat (intersperse (green dot) (map paragraph xs))
   where
     paragraphs = map (unwords . lines) $ splitOn "\n\n" s
@@ -68,11 +69,11 @@ buildDepsToDoc k bs
                 let delt n = indent (n + 1) (renderVersion fieldVal)
                  in flatAlt (delt (longest - fn)) (delt 0)
 
-fieldsToDoc fs =
+fieldsToDoc n fs =
     vcat $
     map (\field ->
              width (dullblue $ string (fieldName field)) $ \fn ->
-                 fieldValueToDoc (longestField - fn) field)
+                 fieldValueToDoc n (longestField - fn) field)
         fs
   where
     longestField = maximum $ map (length . fieldName) fs
@@ -85,4 +86,11 @@ renderBlock n (Block t fs blocks) =
     indent n (align $ blockBodyToDoc n fs blocks)
 
 blockBodyToDoc n fs blocks =
-    fieldsToDoc (catMaybes fs) <> vcat (empty : map (renderBlock n) blocks)
+    fieldsToDoc n
+        (if null fs'
+             then buildable'
+             else fs') <>
+    vcat (empty : map (renderBlock n) blocks)
+  where
+    fs' = catMaybes fs
+    buildable' = [fromJust $ stringField "buildable" "True"]

@@ -35,6 +35,21 @@ setupBuildInfoToBlock SetupBuildInfo {..} =
         ]
         []
 
+
+sourceRepoToBlock SourceRepo {..} =
+    Block
+        (SourceRepo_ repoKind)
+        [ stringField "type" . showType =<< repoType
+        , stringField "location" =<< repoLocation
+        , file "subdir" =<< repoSubdir
+        , file "tag" =<< repoTag
+        , file "branch" =<< repoBranch
+        ]
+        []
+  where
+    showType (OtherRepoType n) = n
+    showType x = map toLower $ show x
+
 pdToFields pd@PackageDescription {..} =
     [ stringField "name" (unPackageName $ pkgName package)
     , version "version" (pkgVersion package)
@@ -62,7 +77,7 @@ pdToFields pd@PackageDescription {..} =
     map (uncurry stringField) customFieldsPD
   where
     license' [] = Nothing
-    license' [l] = stringField "license-file" l
+    license' [l] = file "license-file" l
     license' ls = commas "license-files" ls
 
 flagToBlock MkFlag {..} =

@@ -19,6 +19,7 @@ data BlockHead c = If (Condition c)
                  | Exe_ String
                  | Library_
                  | Flag_ String
+                 | SourceRepo_ RepoKind
                  | CustomSetup
                  deriving Show
 

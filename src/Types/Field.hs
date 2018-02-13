@@ -4,6 +4,7 @@ module Types.Field
     ( Field(..)
     , FieldVal(..)
     , extensions
+    , file
     , fieldName
     , spaces
     , commas
@@ -33,6 +34,7 @@ data FieldVal
     | Version Version
     | License License
     | Str String
+    | File String
     | Spaces [String]
     | Commas [String]
     | LongList [String]
@@ -51,6 +53,8 @@ data Field
 dependencies n as = Just $ Field n (Dependencies as)
 
 licenseField n a = Just $ Field n (License a)
+
+file n a = Just $ Field n (File a)
 
 spaces n as = Just $ Field n (Spaces as)
 

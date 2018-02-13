@@ -88,6 +88,11 @@ showExtension (DisableExtension s) = "No" ++ show s
 showExtension x = error $ show x
 
 renderBlockHead CustomSetup = dullgreen "custom-setup"
+renderBlockHead (SourceRepo_ k) = dullgreen "source-repository" <+> showKind k
+  where
+    showKind RepoHead = "head"
+    showKind RepoThis = "this"
+    showKind (RepoKindUnknown x) = string x
 renderBlockHead Library_ = dullgreen "library"
 renderBlockHead (Exe_ e) = dullgreen "executable" <+> string e
 renderBlockHead (TestSuite_ t) = dullgreen "test-suite" <+> string t
