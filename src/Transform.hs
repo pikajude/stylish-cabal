@@ -202,13 +202,13 @@ condNodeToBlock pkg getBuildInfo extra (CondBranch pred' branch1 branch2) =
      in b1 : maybeToList b2
 
 buildInfoToFields pkg BuildInfo {..} =
-    [ stringField "default-language" . show =<< defaultLanguage
-    , nonEmpty (commas "other-languages" . map show) otherLanguages
+    [ nonEmpty (commas "other-languages" . map show) otherLanguages
     , nonEmpty (modules "other-modules") otherModules
     , nonEmpty (mixins_ "mixins") mixins
     , nonEmpty (modules "autogen-modules") autogenModules
     , nonEmpty (commas "hs-source-dirs") hsSourceDirs
     , buildDeps targetBuildDepends
+    , stringField "default-language" . show =<< defaultLanguage
     , nonEmpty (extensions "default-extensions") defaultExtensions
     , nonEmpty (extensions "extensions") oldExtensions
     , nonEmpty (extensions "other-extensions") otherExtensions

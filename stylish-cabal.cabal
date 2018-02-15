@@ -29,24 +29,23 @@ library
                       Types.Block
                       Types.Field
   hs-source-dirs:     src
+  build-depends:      base == 4.*, Cabal == 2.*, ansi-wl-pprint, deepseq, split
   default-language:   Haskell2010
   default-extensions: NoMonomorphismRestriction
-  build-depends:      base == 4.*, Cabal == 2.*, ansi-wl-pprint, deepseq, split
   ghc-options:        -Wall -Werror -Wno-missing-signatures
 
 executable stylish-cabal
   main-is:          Main.hs
-  default-language: Haskell2010
   build-depends:    base, ansi-wl-pprint, optparse-applicative, stylish-cabal
-  ghc-options: -Wall -Werror
+  default-language: Haskell2010
+  ghc-options:      -Wall -Werror
 
 test-suite strictness
   type:               exitcode-stdio-1.0
   main-is:            Main.hs
+  other-modules:      Instances
+                      Pretty
   hs-source-dirs:     tests/strictness
-  default-language:   Haskell2010
-  other-modules: Instances, Pretty
-  default-extensions: CPP
   build-depends:      base
                     , Cabal
                     , StrictCheck
@@ -57,6 +56,8 @@ test-suite strictness
                     , hspec
                     , hspec-expectations-pretty-diff
                     , stylish-cabal
+  default-language:   Haskell2010
+  default-extensions: CPP
 
   if impl(ghc <8.2)
     buildable: False
@@ -68,7 +69,6 @@ test-suite brute-force
   main-is:          Main.hs
   other-modules:    SortedDesc
   hs-source-dirs:   tests
-  default-language: Haskell2010
   build-depends:    base
                   , Cabal
                   , HUnit
@@ -85,6 +85,7 @@ test-suite brute-force
                   , temporary
                   , utf8-string
                   , wreq
+  default-language: Haskell2010
   ghc-options:      -threaded -rtsopts -with-rtsopts=-N -Wall
 
   if flag(exhaustive-check)
