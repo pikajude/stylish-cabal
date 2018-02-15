@@ -5,12 +5,12 @@ module Parse
     , Result(..)
     ) where
 
+import Data.Maybe
 import Distribution.PackageDescription.Parse
 import Distribution.ParseUtils
 import Distribution.Simple.Utils hiding (die)
-import System.Environment
-import Data.Maybe
 import Distribution.Verbosity
+import System.Environment
 import System.Exit
 
 data Result a
@@ -18,6 +18,7 @@ data Result a
             String
     | Warn [PWarning]
     | Success a
+    deriving (Show)
 
 instance Functor Result where
     fmap f (Success a) = Success (f a)

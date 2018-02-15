@@ -1,5 +1,3 @@
-{-# Language DeriveAnyClass #-}
-{-# Language StandaloneDeriving #-}
 {-# Language FlexibleContexts #-}
 
 import Control.DeepSeq

@@ -41,6 +41,9 @@ fieldValueToDoc _ k (Field _ f) =
             buildDepsToDoc k $
             map (\(PkgconfigDependency pn v) -> (P $ unPkgconfigName pn, v)) ds
         Mixins ms -> mixinsToDoc k $ map (\(Mixin pn r) -> (P $ unPackageName pn, r)) ms
+        RexpModules rms ->
+            buildDepsToDoc k $
+            map (\rexp -> (P $ show $ rexpModuleDoc rexp, anyVersion)) rms
         n -> colon <> indent (k + 1) (align $ val' n)
   where
     val' (Str x) = string x
@@ -62,7 +65,6 @@ fieldValueToDoc _ k (Field _ f) =
     val' (Spaces ls) = fillSep $ map filepath ls
     val' (Modules ms) = vcat $ map moduleDoc $ sort ms
     val' (Module m) = moduleDoc m
-    val' (RexpModules rs) = vcat $ map rexpModuleDoc $ sort rs
     val' (Extensions es) = val' (LongList $ map showExtension es)
     val' (FlibType ty) = string $ showFlibType ty
     val' (FlibOptions fs) = val' $ Spaces $ map showFlibOpt fs

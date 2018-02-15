@@ -98,8 +98,10 @@ filepath x
 moduleDoc = string . intercalate "." . components
 
 rexpModuleDoc (ModuleReexport pkg origname name) =
-    maybe empty (\f -> string (unPackageName f) <> colon) pkg <> moduleDoc origname <+>
-    "as" <+> moduleDoc name
+    maybe empty (\f -> string (unPackageName f) <> colon) pkg <>
+    (if origname == name
+         then moduleDoc origname
+         else moduleDoc origname <+> "as" <+> moduleDoc name)
 
 showExtension (EnableExtension s) = show s
 showExtension (DisableExtension s) = "No" ++ show s

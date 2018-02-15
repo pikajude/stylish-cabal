@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# OPTIONS_GHC -fno-warn-orphans -Wno-missing-signatures #-}
 {-# Language DeriveGeneric #-}
 {-# Language OverloadedStrings #-}
 {-# Language ScopedTypeVariables #-}
@@ -56,8 +56,8 @@ getJson x =
 main :: IO ()
 main = do
     v <- lookupEnv "SKIP"
-    let skip = fromMaybe 0 (readMaybe =<< v)
-    hspec $ do
+    let skip = fromMaybe (0 :: Int) (readMaybe =<< v)
+    hspec $
         describe "comprehensive check" $ do
             it "retains every attribute" $ expectParse =<< readFile "tests/example.cabal"
             testHackage skip
@@ -70,22 +70,20 @@ testHackage skip = do
             packages <- getJson "http://hackage.haskell.org/packages/"
             putStrLn "done, running tests..."
             return packages
-    parallel $ do
-        describe "for every Hackage package" $ do
-            forM_ (drop skip $ zip [0 ..] packages) $ \(i, GetPackage pname) -> do
-                unless (badPackage pname) $
-                    mapSpecItem_ skipOldFiles $ do
-                        it (mkHeader i pname) $ do
-                            revs <-
-                                getJson $
-                                "http://hackage.haskell.org/package/" ++
-                                pname ++ "/revisions/"
-                            let recent = last revs
-                            cabalFile <-
-                                get $
-                                "http://hackage.haskell.org/package/" ++
-                                pname ++ "/revision/" ++ show (number recent) ++ ".cabal"
-                            expectParse $ toString $ view responseBody cabalFile
+    parallel $
+        describe "for every Hackage package" $
+        forM_ (drop skip $ zip [0 ..] packages) $ \(i, GetPackage pname) ->
+            mapSpecItem_ skipOldFiles $
+            it (mkHeader i pname) $ do
+                revs <-
+                    getJson $
+                    "http://hackage.haskell.org/package/" ++ pname ++ "/revisions/"
+                let recent = last revs
+                cabalFile <-
+                    get $
+                    "http://hackage.haskell.org/package/" ++
+                    pname ++ "/revision/" ++ show (number recent) ++ ".cabal"
+                expectParse $ toString $ view responseBody cabalFile
 #else
 testHackage _ = pure ()
 #endif
@@ -110,6 +108,9 @@ expectParse cabalStr = do
             let original =
                     SortedDesc.from <$> parse' cabalStr :: ParseResult SGenericPackageDescription
                 new = SortedDesc.from <$> parse' rendered
+            case new of
+                ParseOk pws _ -> skipIfRedFlags pws
+                _ -> pure ()
             shouldBe original new
         Warn {} ->
             expectationFailure
@@ -117,20 +118,12 @@ expectParse cabalStr = do
         StylishCabal.Error {} ->
             expectationFailure "SKIP Original cabal file does not parse"
   where
+    skipIfRedFlags [] = return ()
+    skipIfRedFlags pws =
+        when (any (\(PWarning p) -> "must specify at least" `isInfixOf` p) pws) $
+        expectationFailure
+            "SKIP Original specified cabal-version is too old for section syntax"
     parse' = parseGenericPackageDescription
-    tooOld (ParseOk ws _) =
-        any (\(PWarning s) -> "Unknown fields: build-depends" `isInfixOf` s) ws
-    dropSomeWarnings (ParseOk pw a) = ParseOk (filter (not . fixedWarning) pw) a
-      where
-        fixedWarning (PWarning s) =
-            or
-                [ "must use section syntax" `isInfixOf` s
-                -- edge case: very old Cabal versions don't use section
-                -- syntax. stylish-cabal isn't going to generate old-style
-                -- cabal files. the output still parses so we just ignore
-                -- this case.
-                , "must specify at least" `isInfixOf` s
-                ]
 
 deriving instance Eq a => Eq (ParseResult a)
 
