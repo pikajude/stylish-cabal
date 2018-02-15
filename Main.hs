@@ -5,11 +5,11 @@ module Main where
 
 import Data.Char
 import Data.Monoid
-import Options.Applicative
+import Options.Applicative hiding (ParserResult(..))
 import StylishCabal
 import System.Exit
 import System.IO
-import Text.PrettyPrint.ANSI.Leijen (displayIO, displayS, plain, renderPretty)
+import Text.PrettyPrint.ANSI.Leijen (Doc, displayIO, displayS, plain, renderSmart)
 
 data Opts = Opts
     { file :: Maybe FilePath
@@ -41,6 +41,7 @@ opts =
          value 2 <>
          metavar "INT")
 
+render :: Opts -> Doc -> Handle -> IO ()
 render o doc h = do
     isTerminal <- hIsTerminalDevice stdout
     if color o && isTerminal
@@ -49,7 +50,7 @@ render o doc h = do
             let docStr = unlines . map stripBlank . lines $ displayS (f $ plain doc) ""
             hPutStr h docStr
   where
-    f = renderPretty 1.0 (width o)
+    f = renderSmart 1.0 (width o)
     stripBlank x
         | all isSpace x = []
         | otherwise = x
@@ -58,10 +59,14 @@ main :: IO ()
 main = do
     o <- execParser $ info (opts <**> helper) (fullDesc <> progDesc "Format a Cabal file")
     f <- maybe getContents readFile (file o)
-    doc <- pretty (indent o) f
-    if inPlace o
-        then case file o of
-                 Just f -> withFile f WriteMode (render o doc)
-                 Nothing ->
-                     die "stylish-cabal: --in-place specified, but I'm reading from stdin"
-        else render o doc stdout
+    case pretty (indent o) <$> parse f of
+        Error m s -> displayError m s
+        Warn warnings -> printWarnings warnings
+        Success doc ->
+            if inPlace o
+                then case file o of
+                         Just fname -> withFile fname WriteMode (render o doc)
+                         Nothing -> die inPlaceErr
+                else render o doc stdout
+  where
+    inPlaceErr = "stylish-cabal: --in-place specified, but I'm reading from stdin"

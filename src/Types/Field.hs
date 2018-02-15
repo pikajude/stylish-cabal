@@ -4,13 +4,20 @@ module Types.Field
     ( Field(..)
     , FieldVal(..)
     , extensions
+    , rexpModules
+    , flibOptions
     , file
+    , flibType
     , fieldName
     , spaces
     , commas
+    , toolDepends
+    , oldToolDepends
+    , pcDepends
     , buildDeps
     , modules
     , module_
+    , mixins_
     , desc
     , version
     , cabalVersion
@@ -27,6 +34,13 @@ import Distribution.Compiler
 import Distribution.License
 import Distribution.ModuleName
 import Distribution.Types.Dependency
+import Distribution.Types.ExeDependency
+import Distribution.Types.ForeignLibOption
+import Distribution.Types.ForeignLibType
+import Distribution.Types.LegacyExeDependency
+import Distribution.Types.Mixin
+import Distribution.Types.ModuleReexport
+import Distribution.Types.PkgconfigDependency
 import Distribution.Version
 import Language.Haskell.Extension
 
@@ -43,7 +57,14 @@ data FieldVal
     | Extensions [Extension]
     | Modules [ModuleName]
     | Module ModuleName
+    | RexpModules [ModuleReexport]
     | TestedWith [(CompilerFlavor, VersionRange)]
+    | ToolDepends [ExeDependency]
+    | OldToolDepends [LegacyExeDependency]
+    | PcDepends [PkgconfigDependency]
+    | Mixins [Mixin]
+    | FlibType ForeignLibType
+    | FlibOptions [ForeignLibOption]
     deriving (Show)
 
 data Field
@@ -51,6 +72,20 @@ data Field
     | Field String
             FieldVal
     deriving (Show)
+
+flibType n p = Just $ Field n (FlibType p)
+
+flibOptions n p = Just $ Field n (FlibOptions p)
+
+toolDepends n as = Just $ Field n (ToolDepends as)
+
+oldToolDepends n as = Just $ Field n (OldToolDepends as)
+
+pcDepends n as = Just $ Field n (PcDepends as)
+
+rexpModules n as = Just $ Field n (RexpModules as)
+
+mixins_ n as = Just $ Field n (Mixins as)
 
 dependencies n as = Just $ Field n (Dependencies as)
 

@@ -21,22 +21,47 @@ flag exhaustive-check
   description: Should I test all Hackage cabal files?
 
 library
-  exposed-modules:  StylishCabal
-  other-modules:    Parse
-                    Render
-                    Render.Lib
-                    Transform
-                    Types.Block
-                    Types.Field
-  hs-source-dirs:   src
-  default-language: Haskell2010
-  build-depends:    base == 4.*, Cabal, ansi-wl-pprint, split
-  ghc-options:      -Wall -Wno-missing-signatures
+  exposed-modules:    StylishCabal
+  other-modules:      Parse
+                      Render
+                      Render.Lib
+                      Transform
+                      Types.Block
+                      Types.Field
+  hs-source-dirs:     src
+  default-language:   Haskell2010
+  default-extensions: NoMonomorphismRestriction
+  build-depends:      base == 4.*, Cabal, ansi-wl-pprint, deepseq, split
+  ghc-options:        -Wall -Werror -Wno-missing-signatures
 
 executable stylish-cabal
   main-is:          Main.hs
   default-language: Haskell2010
   build-depends:    base, ansi-wl-pprint, optparse-applicative, stylish-cabal
+  ghc-options: -Wall -Werror
+
+test-suite strictness
+  type:               exitcode-stdio-1.0
+  main-is:            Main.hs
+  hs-source-dirs:     tests/strictness
+  default-language:   Haskell2010
+  other-modules: Instances, Pretty
+  default-extensions: CPP
+  build-depends:      base
+                    , Cabal
+                    , StrictCheck
+                    , ansi-wl-pprint
+                    , bytestring
+                    , deepseq
+                    , generics-sop
+                    , hspec
+                    , hspec-expectations-pretty-diff
+                    , stylish-cabal
+
+  if impl(ghc <8.2)
+    buildable: False
+  else
+    ghc-options: -freduction-depth=0
 
 test-suite brute-force
   type:             exitcode-stdio-1.0
@@ -52,6 +77,7 @@ test-suite brute-force
                   , async
                   , containers
                   , hspec
+                  , hspec-core
                   , hspec-expectations-pretty-diff
                   , lens
                   , optparse-applicative

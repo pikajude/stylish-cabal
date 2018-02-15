@@ -1,16 +1,34 @@
-module Parse (parse) where
+module Parse
+    ( parse
+    , displayError
+    , printWarnings
+    , Result(..)
+    ) where
 
 import Distribution.PackageDescription.Parse
 import Distribution.ParseUtils
 import Distribution.Simple.Utils
 import Distribution.Verbosity
+import System.Exit
 
-parse input = do
-    let res = parseGenericPackageDescription input
-    case res of
-        ParseFailed e -> do
-            let (line', message) = locatedErrorMsg e
-            dieWithLocation' normal "<input>" line' message
-        ParseOk warnings x -> do
-            mapM_ (warn normal . showPWarning "<input>") $ reverse warnings
-            return x
+data Result a
+    = Error (Maybe LineNo)
+            String
+    | Warn [PWarning]
+    | Success a
+
+instance Functor Result where
+    fmap f (Success a) = Success (f a)
+    fmap _ (Warn ps) = Warn ps
+    fmap _ (Error m s) = Error m s
+
+parse input =
+    case parseGenericPackageDescription input of
+        ParseFailed e -> uncurry Error $ locatedErrorMsg e
+        ParseOk warnings x
+            | null warnings -> Success x
+            | otherwise -> Warn $ reverse warnings
+
+displayError line' message = dieWithLocation' normal "<input>" line' message
+
+printWarnings ps = mapM_ (warn normal . showPWarning "<input>") ps >> exitFailure

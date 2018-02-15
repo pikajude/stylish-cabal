@@ -17,7 +17,8 @@ data BlockHead c = If (Condition c)
                  | Benchmark_ String
                  | TestSuite_ String
                  | Exe_ String
-                 | Library_
+                 | Library_ (Maybe String)
+                 | ForeignLib_ String
                  | Flag_ String
                  | SourceRepo_ RepoKind
                  | CustomSetup
