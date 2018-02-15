@@ -15,7 +15,7 @@ source-repository head
   type:     git
   location: https://github.com/pikajude/stylish-cabal.git
 
-flag exhaustive-check
+flag test-hackage
   default:     False
   manual:      True
   description: Should I test all Hackage cabal files?
@@ -29,7 +29,7 @@ library
                       Types.Block
                       Types.Field
   hs-source-dirs:     src
-  build-depends:      base == 4.*, Cabal == 2.*, ansi-wl-pprint, deepseq, split
+  build-depends:      base == 4.*, Cabal ^>= 2.0.0, ansi-wl-pprint, deepseq, split
   default-language:   Haskell2010
   default-extensions: NoMonomorphismRestriction
   ghc-options:        -Wall -Werror -Wno-missing-signatures
@@ -64,31 +64,30 @@ test-suite strictness
   else
     ghc-options: -freduction-depth=0
 
-test-suite brute-force
-  type:             exitcode-stdio-1.0
-  main-is:          Main.hs
-  other-modules:    SortedDesc
-  hs-source-dirs:   tests
-  build-depends:    base
-                  , Cabal
-                  , HUnit
-                  , aeson
-                  , ansi-wl-pprint
-                  , async
-                  , containers
-                  , hspec
-                  , hspec-core
-                  , hspec-expectations-pretty-diff
-                  , lens
-                  , optparse-applicative
-                  , stylish-cabal
-                  , temporary
-                  , utf8-string
-                  , wreq
-  default-language: Haskell2010
-  ghc-options:      -threaded -rtsopts -with-rtsopts=-N -Wall
+test-suite roundtrip
+  type:               exitcode-stdio-1.0
+  main-is:            Main.hs
+  other-modules:      SortedDesc
+  hs-source-dirs:     tests/roundtrip
+  build-depends:      base
+                    , Cabal
+                    , HUnit
+                    , aeson
+                    , ansi-wl-pprint
+                    , async
+                    , containers
+                    , hspec
+                    , hspec-core
+                    , hspec-expectations-pretty-diff
+                    , lens
+                    , optparse-applicative
+                    , stylish-cabal
+                    , temporary
+                    , utf8-string
+                    , wreq
+  default-language:   Haskell2010
+  default-extensions: CPP
+  ghc-options:        -threaded -rtsopts -with-rtsopts=-N -Wall
 
-  if flag(exhaustive-check)
-    buildable: True
-  else
-    buildable: False
+  if flag(test-hackage)
+    cpp-options: -DTEST_HACKAGE=1

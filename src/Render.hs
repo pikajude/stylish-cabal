@@ -117,7 +117,7 @@ mixinsToDoc k bs
     parenthesize =
         group .
         encloseSep
-            (flatAlt (string "( ") lparen)
+            (flatAlt (string " (") lparen) -- `mixin-name ( Module` doesn't parse
             (flatAlt (line <> rparen) rparen)
             (string ", ")
     providesDoc (ModuleRenaming ms) = parenthesize $ map renaming ms

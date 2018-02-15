@@ -7,7 +7,9 @@ module Parse
 
 import Distribution.PackageDescription.Parse
 import Distribution.ParseUtils
-import Distribution.Simple.Utils
+import Distribution.Simple.Utils hiding (die)
+import System.Environment
+import Data.Maybe
 import Distribution.Verbosity
 import System.Exit
 
@@ -29,6 +31,15 @@ parse input =
             | null warnings -> Success x
             | otherwise -> Warn $ reverse warnings
 
-displayError line' message = dieWithLocation' normal "<input>" line' message
+displayError fpath line' message = do
+    prog <- getProgName
+    die $
+        prog ++
+        ": " ++
+        fromMaybe "<input>" fpath ++
+        (case line' of
+             Just lineno -> ":" ++ show lineno
+             Nothing -> "") ++
+        ": " ++ message
 
 printWarnings ps = mapM_ (warn normal . showPWarning "<input>") ps >> exitFailure

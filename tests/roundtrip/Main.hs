@@ -31,7 +31,7 @@ import Test.Hspec (describe, hspec, it, parallel, runIO)
 import Test.Hspec.Core.Spec
 import qualified Test.Hspec.Core.Spec as H
 import Test.Hspec.Expectations.Pretty
-import Text.PrettyPrint.ANSI.Leijen (displayS, plain, renderPretty)
+import Text.PrettyPrint.ANSI.Leijen (displayS, plain, renderSmart)
 import Text.Read (readMaybe)
 
 newtype GetPackage = GetPackage
@@ -58,34 +58,37 @@ main = do
     v <- lookupEnv "SKIP"
     let skip = fromMaybe 0 (readMaybe =<< v)
     hspec $ do
-        packages <-
-            runIO $ do
-                hSetBuffering stdout NoBuffering
-                putStrLn "getting package list..."
-                packages <- getJson "http://hackage.haskell.org/packages/"
-                putStrLn "done, running tests..."
-                return packages
-        parallel $ do
-            describe "comprehensive check" $
-                it "retains every attribute" $
-                expectParse =<< readFile "tests/example.cabal"
-            describe "brute-force" $ do
-                forM_ (drop skip $ zip [0 ..] packages) $ \(i, GetPackage pname) -> do
-                    unless (badPackage pname) $
-                        mapSpecItem_ skipOldFiles $ do
-                            it (mkHeader i pname) $ do
-                                revs <-
-                                    getJson $
-                                    "http://hackage.haskell.org/package/" ++
-                                    pname ++ "/revisions/"
-                                let recent = last revs
-                                cabalFile <-
-                                    get $
-                                    "http://hackage.haskell.org/package/" ++
-                                    pname ++
-                                    "/revision/" ++ show (number recent) ++ ".cabal"
-                                expectParse $ toString $ view responseBody cabalFile
-
+        describe "comprehensive check" $ do
+            it "retains every attribute" $ expectParse =<< readFile "tests/example.cabal"
+            testHackage skip
+#if TEST_HACKAGE
+testHackage skip = do
+    packages <-
+        runIO $ do
+            hSetBuffering stdout NoBuffering
+            putStrLn "getting package list..."
+            packages <- getJson "http://hackage.haskell.org/packages/"
+            putStrLn "done, running tests..."
+            return packages
+    parallel $ do
+        describe "for every Hackage package" $ do
+            forM_ (drop skip $ zip [0 ..] packages) $ \(i, GetPackage pname) -> do
+                unless (badPackage pname) $
+                    mapSpecItem_ skipOldFiles $ do
+                        it (mkHeader i pname) $ do
+                            revs <-
+                                getJson $
+                                "http://hackage.haskell.org/package/" ++
+                                pname ++ "/revisions/"
+                            let recent = last revs
+                            cabalFile <-
+                                get $
+                                "http://hackage.haskell.org/package/" ++
+                                pname ++ "/revision/" ++ show (number recent) ++ ".cabal"
+                            expectParse $ toString $ view responseBody cabalFile
+#else
+testHackage _ = pure ()
+#endif
 skipOldFiles i =
     i
         { itemExample =
@@ -101,7 +104,7 @@ skipOldFiles i =
 mkHeader i p = "parses #" ++ show i ++ ": " ++ p
 
 expectParse cabalStr = do
-    let doc = (`displayS` "") . renderPretty 1.0 80 . plain . pretty 2 <$> parse cabalStr
+    let doc = (`displayS` "") . renderSmart 1.0 80 . plain . pretty 2 <$> parse cabalStr
     case doc of
         StylishCabal.Success rendered -> do
             let original =

@@ -60,7 +60,7 @@ main = do
     o <- execParser $ info (opts <**> helper) (fullDesc <> progDesc "Format a Cabal file")
     f <- maybe getContents readFile (file o)
     case pretty (indent o) <$> parse f of
-        Error m s -> displayError m s
+        Error m s -> displayError (file o) m s
         Warn warnings -> printWarnings warnings
         Success doc ->
             if inPlace o

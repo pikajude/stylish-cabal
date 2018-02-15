@@ -7,6 +7,7 @@ module Transform
 
 import Control.Arrow
 import Control.DeepSeq
+import Control.Monad
 import Data.Char
 import Data.Either
 import Data.Maybe
@@ -20,6 +21,7 @@ import Distribution.Types.ForeignLibType
 import Distribution.Types.PackageId
 import Distribution.Types.PackageName
 import Distribution.Types.UnqualComponentName
+import Distribution.Version
 
 import Types.Block
 import Types.Field
@@ -62,7 +64,8 @@ sourceRepoToBlock SourceRepo {..} =
     showType x = map toLower $ show x
 
 pdToFields pd@PackageDescription {..} =
-    [ stringField "name" (unPackageName $ pkgName package)
+    [ guard newSpec >> cabalVersion "cabal-version" packageVersion
+    , stringField "name" (unPackageName $ pkgName package)
     , version "version" (pkgVersion package)
     , nonEmpty (stringField "synopsis") synopsis
     , desc description
@@ -83,10 +86,12 @@ pdToFields pd@PackageDescription {..} =
     , nonEmpty (longList "extra-doc-files") extraDocFiles
     , nonEmpty (longList "data-files") dataFiles
     , nonEmpty (stringField "data-dir") dataDir
-    , cabalVersion "cabal-version" (specVersion pd)
+    , guard (not newSpec) >> cabalVersion "cabal-version" (specVersion pd)
     ] ++
     map (uncurry stringField) customFieldsPD
   where
+    newSpec = withinRange packageVersion (orLaterVersion $ mkVersion [2, 1])
+    packageVersion = specVersion pd
     license' [] = Nothing
     license' [l] = file "license-file" l
     license' ls = commas "license-files" ls

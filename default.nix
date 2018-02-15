@@ -8,9 +8,15 @@ let
                        then pkgs.haskellPackages
                        else pkgs.haskell.packages.${compiler};
 
-  drv = (haskellPackages.callCabal2nix "stylish-cabal" ./. {}).overrideScope (
-    self: super: {
-      Cabal = self.Cabal_2_0_1_1;
+  drv = (haskellPackages.callCabal2nix "stylish-cabal" ./. {})
+    .overrideScope (self: super: {
+      # Cabal = self.Cabal_2_3_0_0;
+      # lens = pkgs.haskell.lib.overrideCabal super.lens (drv: {
+      #   # custom setup needs Cabal == 2.0.*
+      #   postPatch = ''
+      #     rm Setup.lhs
+      #   '';
+      # });
     });
 
 in
