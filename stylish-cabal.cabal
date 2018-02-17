@@ -5,6 +5,7 @@ description:        A tool for nicely formatting your Cabal file.
 license:            BSD3
 license-file:       LICENSE
 author:             Jude Taylor
+tested-with:        GHC == 7.8.4, GHC == 7.10.3, GHC == 8.0.2, GHC == 8.2.2
 maintainer:         me@jude.xyz
 category:           Language
 build-type:         Simple
@@ -112,3 +113,6 @@ test-suite roundtrip-hackage
   default-language: Haskell2010
   ghc-options:      -threaded -rtsopts -with-rtsopts=-N -Wall -Werror
                     -fno-warn-missing-signatures
+
+  if !flag(test-hackage)
+    buildable: False

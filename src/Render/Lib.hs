@@ -18,6 +18,7 @@ module Render.Lib
 
 import Data.Char
 import Data.List
+import Distribution.Compiler
 import Distribution.License
 import Distribution.ModuleName
 import Distribution.PackageDescription
@@ -65,10 +66,15 @@ showL :: String -> Maybe Version -> String
 showL s Nothing = s
 showL s (Just v) = s ++ "-" ++ showVersion v
 
-renderTestedWith :: Show a => [(a, VersionRange)] -> Doc
 renderTestedWith =
     fillSep .
-    punctuate comma . map (\(compiler, vers) -> showVersioned (show compiler, vers))
+    punctuate comma .
+    map (\(compiler, vers) -> showVersioned (showCompiler compiler, vers))
+  where
+    showCompiler (OtherCompiler x) = x
+    showCompiler HaskellSuite{} =
+        error "Not sure what to do with HaskellSuite value in tested-with field"
+    showCompiler x = show x
 
 showVersioned :: (String, VersionRange) -> Doc
 showVersioned (pn, v')

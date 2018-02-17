@@ -1,3 +1,4 @@
+{-# Language CPP #-}
 {-# Language FlexibleContexts #-}
 {-# Language RecordWildCards #-}
 
@@ -22,6 +23,9 @@ import Distribution.Types.PackageId
 import Distribution.Types.PackageName
 import Distribution.Types.UnqualComponentName
 import Distribution.Version
+#if __GLASGOW_HASKELL__ < 710
+import Data.Functor ((<$>))
+#endif
 
 import Types.Block
 import Types.Field
@@ -73,9 +77,9 @@ pdToFields pd@PackageDescription {..} =
     , license' licenseFiles
     , nonEmpty (stringField "copyright") copyright
     , nonEmpty (stringField "author") author
+    , nonEmpty (stringField "maintainer") maintainer
     , nonEmpty (stringField "stability") stability
     , nonEmpty (testedField "tested-with") testedWith
-    , nonEmpty (stringField "maintainer") maintainer
     , nonEmpty (stringField "category") category
     , nonEmpty (stringField "homepage") homepage
     , nonEmpty (stringField "package-url") pkgUrl

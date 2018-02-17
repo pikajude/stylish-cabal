@@ -66,7 +66,7 @@ main = do
             if inPlace o
                 then case file o of
                          Just fname -> withFile fname WriteMode (render o doc)
-                         Nothing -> die inPlaceErr
+                         Nothing -> hPutStrLn stderr inPlaceErr >> exitFailure
                 else render o doc stdout
   where
     inPlaceErr = "stylish-cabal: --in-place specified, but I'm reading from stdin"

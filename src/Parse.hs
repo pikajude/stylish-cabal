@@ -8,10 +8,11 @@ module Parse
 import Data.Maybe
 import Distribution.PackageDescription.Parse
 import Distribution.ParseUtils
-import Distribution.Simple.Utils hiding (die)
+import Distribution.Simple.Utils
 import Distribution.Verbosity
 import System.Environment
 import System.Exit
+import System.IO
 
 data Result a
     = Error (Maybe LineNo)
@@ -34,7 +35,7 @@ parse input =
 
 displayError fpath line' message = do
     prog <- getProgName
-    die $
+    hPutStrLn stderr $
         prog ++
         ": " ++
         fromMaybe "<input>" fpath ++
@@ -42,5 +43,6 @@ displayError fpath line' message = do
              Just lineno -> ":" ++ show lineno
              Nothing -> "") ++
         ": " ++ message
+    exitFailure
 
 printWarnings ps = mapM_ (warn normal . showPWarning "<input>") ps >> exitFailure

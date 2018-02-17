@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# OPTIONS_GHC -fno-warn-orphans -fno-warn-dodgy-imports #-}
 {-# Language RecordWildCards #-}
 {-# Language StandaloneDeriving #-}
 {-# Language FlexibleContexts #-}

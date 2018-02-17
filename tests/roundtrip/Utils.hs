@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# Language CPP #-}
 {-# Language StandaloneDeriving #-}
 
 module Utils where
@@ -12,6 +13,10 @@ import StylishCabal
 import Test.Hspec.Core.Spec
 import Test.Hspec.Expectations.Pretty
 import Text.PrettyPrint.ANSI.Leijen (displayS, plain, renderSmart)
+#if __GLASGOW_HASKELL__ < 710
+import Control.Applicative (pure)
+import Data.Functor ((<$>))
+#endif
 
 deriving instance Eq a => Eq (ParseResult a)
 
