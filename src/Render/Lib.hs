@@ -72,7 +72,7 @@ renderTestedWith =
     map (\(compiler, vers) -> showVersioned (showCompiler compiler, vers))
   where
     showCompiler (OtherCompiler x) = x
-    showCompiler HaskellSuite{} =
+    showCompiler HaskellSuite {} =
         error "Not sure what to do with HaskellSuite value in tested-with field"
     showCompiler x = show x
 
@@ -85,10 +85,10 @@ renderVersion =
     foldVersionRange'
         empty
         (\v -> green "==" <+> dullyellow (string (showVersion v)))
-        (\v -> green ">" <> dullyellow (string (showVersion v)))
-        (\v -> green "<" <> dullyellow (string (showVersion v)))
-        (\v -> green ">=" <> dullyellow (string (showVersion v)))
-        (\v -> green "<=" <> dullyellow (string (showVersion v)))
+        (\v -> green ">" <+> dullyellow (string (showVersion v)))
+        (\v -> green "<" <+> dullyellow (string (showVersion v)))
+        (\v -> green ">=" <+> dullyellow (string (showVersion v)))
+        (\v -> green "<=" <+> dullyellow (string (showVersion v)))
         (\v _ -> green "==" <+> dullyellow (string (showVersion v) <> ".*"))
         (\v _ -> green "^>=" <+> dullyellow (string (showVersion v)))
         (\a b -> a <+> green "||" <+> b)
@@ -133,7 +133,12 @@ renderBlockHead (If c) = dullblue "if" <+> showPredicate c
 renderBlockHead Else = dullblue "else"
 
 showPredicate (Var x) = showVar x
-showPredicate (CNot p) = dullmagenta (string "!") <> showPredicate p
+showPredicate (CNot p) =
+    dullmagenta (string "!") <>
+    case p of
+        Lit {} -> showPredicate p
+        Var {} -> showPredicate p
+        _ -> parens (showPredicate p)
 showPredicate (CAnd a b) = showPredicate a <+> dullblue (string "&&") <+> showPredicate b
 showPredicate (COr a b) = showPredicate a <+> dullblue (string "||") <+> showPredicate b
 showPredicate (Lit b) = string $ show b
