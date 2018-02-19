@@ -1,5 +1,5 @@
 name:               stylish-cabal
-version:            0.1.0.0
+version:            0.1.1.0
 synopsis:           Format Cabal files
 description:        A tool for nicely formatting your Cabal file.
 license:            BSD3
