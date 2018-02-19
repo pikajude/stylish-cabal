@@ -1,0 +1,137 @@
+name:               example-package
+version:            1.2.3.4
+synopsis:           A short synopsis for this package
+description:
+  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam sagittis neque magna, eu
+  accumsan velit convallis at. In at odio eu risus facilisis vehicula vel non elit.
+  Vestibulum volutpat id tellus ac malesuada.
+  .
+  Fusce rutrum elit libero, ac malesuada nibh semper ut. Donec commodo viverra felis.
+  Quisque tincidunt ultrices turpis. Vestibulum gravida, urna ac pharetra consectetur,
+  nulla lacus sollicitudin diam, quis dignissim libero neque at nulla.
+license:            MIT
+license-files:      LICENSE1, "license with spaces"
+copyright:          (c) 2018 John Doe
+author:             John Doe
+maintainer:         johndoe@example.com
+stability:          experimental
+tested-with:        GHC >= 7.4 && < 8.4
+category:           Example
+homepage:           https://example.com/cabal
+package-url:        https://gituh.bcom/example/Cabal/downloads/1.cabal
+bug-reports:        https://github.com/example/cabal
+build-type:         Custom
+extra-tmp-files:    tmpfile1
+                    tmpfile2
+extra-source-files: extra-file1
+                    extra-file2
+extra-doc-files:    docfile1
+                    docfile2
+data-files:         "file1 with spaces"
+                    data/*
+data-dir:           .
+cabal-version:      >= 1.8
+
+custom-setup
+  setup-depends: base >= 4.5 && < 4.11, Cabal < 1.25
+
+source-repository head
+  type:     git
+  location: https://github.com/pikajude/stylish-cabal.cabal
+  subdir:   tests
+  tag:      latest
+  branch:   master
+
+source-repository this
+  type:     cvs
+  location: anoncvs@cvs.foo.org:/cvs
+  module:   cvsmodule
+
+flag neat-flag
+  default:     False
+  manual:      True
+  description: This is a flag with a nice little description
+
+library
+  exposed:              False
+  exposed-modules:      Example
+  reexported-modules:   base:Numeric as MyNumericModule
+  signatures:           ExampleSig
+  other-languages:      Haskell98
+  other-modules:        Example.Module1
+                        Example.Module2
+  mixins:               example-mixin2  (Mixin as Foo.Mixin2
+                                       , Mixina as Foo.Mixina2
+                                       , Mixinb as Foo.Mixinb2
+                                       , Mixinc as Foo.Mixinc2
+                                       )
+                      , example-mixin3 (Mixin as Bar.Mixin)
+                              requires hiding (Mixin4, Mixin5)
+                      , example-mixin4
+                      , short          (Mixin as Foo.Mixin) requires (Bar as Foo.Bar)
+  autogen-modules:      Example.AutogenModule
+  hs-source-dirs:       src
+  build-depends:        base       == 4.*
+                      , attoparsec
+                      , bar        ^>= 3.4
+                      , foo        >= 1.2.3 && < 1.4
+                      , somelib    ^>= 1.2.3.4
+  default-extensions:   NoMonomorphismRestriction
+  other-extensions:     OverloadedStrings
+  extra-libraries:      iconv
+  extra-ghci-libraries: webkit
+  pkgconfig-depends:    cairo >= 1.0, gtk+-2.0 >= 2.10
+  frameworks:           CoreAudio
+  extra-framework-dirs: frameworks
+  cpp-options:          -DFOO=1
+  cc-options:           -compat
+  ld-options:           -static
+  c-sources:            csource.c
+  extra-lib-dirs:       lib, lib2
+  includes:             example.h
+  install-includes:     output.h
+  include-dirs:         include
+  js-sources:           jssource.js
+  build-tool-depends:   cpphs:cpphs >= 4.0, foo:bar == 1.2.*, hsc2hs:hsc2hs
+  build-tools:          unknown-build-tool
+  ghc-options:          -Wall
+  ghc-prof-options:     -fcaf-all
+  ghc-shared-options:   -fobject-code
+  x-a-custom-field:     "Some Custom Value"
+
+  if impl(ghc >= 7.5) && (os(osx) || !arch(i386))
+    other-extensions: PolyKinds
+
+library example-internal
+  exposed-modules: Example.Internal
+  build-depends:   base
+
+foreign-library examplelib
+  type:              native-shared
+  lib-version-info:  6:3:2
+  lib-version-linux: 4.3.2
+  other-modules:     ExampleLib.SomeModule
+  hs-source-dirs:    src
+  build-depends:     base == 4.*
+  default-language:  Haskell2010
+  c-sources:         csrc/ExampleLib.c
+
+  if os(windows)
+    options:      standalone
+    mod-def-file: ExampleLib.def, ExampleLib2.def
+
+executable example
+  main-is: example.hs
+  scope:   private
+
+test-suite testname
+  type:    exitcode-stdio-1.0
+  main-is: test.hs
+
+test-suite detailed
+  type:        detailed-0.9
+  test-module: Example.Test
+
+benchmark bench
+  type:    exitcode-stdio-1.0
+  main-is: benchmark.hs

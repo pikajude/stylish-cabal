@@ -133,15 +133,16 @@ renderBlockHead (If c) = dullblue "if" <+> showPredicate c
 renderBlockHead Else = dullblue "else"
 
 showPredicate (Var x) = showVar x
-showPredicate (CNot p) =
-    dullmagenta (string "!") <>
-    case p of
-        Lit {} -> showPredicate p
-        Var {} -> showPredicate p
-        _ -> parens (showPredicate p)
-showPredicate (CAnd a b) = showPredicate a <+> dullblue (string "&&") <+> showPredicate b
-showPredicate (COr a b) = showPredicate a <+> dullblue (string "||") <+> showPredicate b
+showPredicate (CNot p) = dullmagenta (string "!") <> maybeParens p
+showPredicate (CAnd a b) = maybeParens a <+> dullblue (string "&&") <+> maybeParens b
+showPredicate (COr a b) = maybeParens a <+> dullblue (string "||") <+> maybeParens b
 showPredicate (Lit b) = string $ show b
+
+maybeParens p = case p of
+    Lit {} -> showPredicate p
+    Var {} -> showPredicate p
+    CNot {} -> showPredicate p
+    _ -> parens (showPredicate p)
 
 showVar (Impl compiler vers) =
     dullgreen $
