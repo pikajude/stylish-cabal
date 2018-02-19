@@ -1,4 +1,4 @@
-# stylish-cabal
+# stylish-cabal [![stylish-cabal](https://img.shields.io/hackage/v/stylish-cabal.svg)](https://hackage.haskell.org/package/stylish-cabal)
 
 Automatic formatting for Cabal files.
 
