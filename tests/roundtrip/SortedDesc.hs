@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# Language CPP #-}
 {-# Language NamedFieldPuns #-}
 {-# Language RecordWildCards #-}
 {-# Language StandaloneDeriving #-}
