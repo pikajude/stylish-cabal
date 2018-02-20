@@ -84,8 +84,8 @@ pkgconfig-depends:  cairo >= 1.0, gtk+-2.0 >= 2.10
 Version constraints (where applicable) are aligned to the longest dependency name in the
 list, regardless of whether it has a version constraint or not.
 
-**Side note: the `as` clause in `reexported-modules` isn't aligned the same way version
-constraints are. should it be?**
+*Side note: the `as` clause in `reexported-modules` isn't aligned the same way version
+constraints are. should it be?*
 
 ### Mixins
 
