@@ -12,7 +12,7 @@ category:           Language
 build-type:         Simple
 extra-source-files: ChangeLog.md
                     tests/example.cabal
-cabal-version:      1.23
+cabal-version:      >= 1.23
 
 source-repository head
   type:     git
@@ -35,8 +35,7 @@ flag test-strictness
     Run the strictness testsuite. This requires the StrictCheck package which is not yet
     on Hackage, and thus is disabled by default.
 
-library
-  exposed:            False
+library stylish-cabal-lib
   exposed-modules:    StylishCabal
   other-modules:      Parse
                       Render
@@ -55,7 +54,7 @@ library
 
 executable stylish-cabal
   main-is:          Main.hs
-  build-depends:    base, ansi-wl-pprint, optparse-applicative, stylish-cabal
+  build-depends:    base, ansi-wl-pprint, optparse-applicative, stylish-cabal-lib
   default-language: Haskell2010
   ghc-options:      -Wall
 
@@ -88,7 +87,7 @@ test-suite strictness
                     , generics-sop
                     , hspec
                     , hspec-expectations-pretty-diff
-                    , stylish-cabal
+                    , stylish-cabal-lib
   default-language:   Haskell2010
   default-extensions: CPP
   ghc-options:        -freduction-depth=0
@@ -112,7 +111,7 @@ test-suite roundtrip
                     , hspec
                     , hspec-core
                     , hspec-expectations-pretty-diff
-                    , stylish-cabal
+                    , stylish-cabal-lib
   default-language:   Haskell2010
   default-extensions: CPP
   ghc-options:        -Wall -fno-warn-missing-signatures
@@ -136,7 +135,7 @@ test-suite roundtrip-hackage
                   , hspec-expectations-pretty-diff
                   , lens
                   , mwc-random
-                  , stylish-cabal
+                  , stylish-cabal-lib
                   , utf8-string
                   , vector
                   , wreq
