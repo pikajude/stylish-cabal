@@ -4,7 +4,12 @@
 {-# Language TypeFamilies #-}
 {-# Language StandaloneDeriving #-}
 
-#define PRIM(c) instance Shaped c where type Shape c = Prim c; project = projectPrim; embed = embedPrim; match = matchPrim; render = prettyPrim
+#define PRIM(c) instance Shaped c where \
+    type Shape c = Prim c; \
+    project = projectPrim; \
+    embed = embedPrim; \
+    match = matchPrim; \
+    render = prettyPrim
 
 #define DERIVE(c) deriveGeneric ''c; instance Shaped c
 #define DERIVEN(c) DERIVE(c); deriving instance NFData c
