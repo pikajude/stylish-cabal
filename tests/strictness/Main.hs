@@ -32,7 +32,7 @@ process gpd =
         , C.foreignLibs pd
         , C.testSuites pd
         , C.benchmarks pd)
-        (length $ show $ pretty 2 gpd)
+        (length $ show $ pretty gpd)
   where
     pd = packageDescription gpd
 

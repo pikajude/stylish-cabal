@@ -23,7 +23,7 @@ import Distribution.Types.PackageId
 import Distribution.Types.PackageName
 import Distribution.Types.UnqualComponentName
 import Distribution.Version
-#if __GLASGOW_HASKELL__ < 710
+#if !MIN_VERSION_base(4,8,0)
 import Data.Functor ((<$>))
 #endif
 

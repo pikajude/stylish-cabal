@@ -1,15 +1,18 @@
+{-# Language CPP #-}
 {-# Language NoMonomorphismRestriction #-}
 {-# Language OverloadedStrings #-}
 
 module Main where
 
 import Data.Char
-import Data.Monoid
 import Options.Applicative hiding (ParserResult(..))
 import StylishCabal
 import System.Exit
 import System.IO
-import Text.PrettyPrint.ANSI.Leijen (Doc, displayIO, displayS, plain, renderSmart)
+
+#if !MIN_VERSION_base(4,11,0)
+import Data.Monoid
+#endif
 
 data Opts = Opts
     { file :: Maybe FilePath
@@ -41,8 +44,8 @@ opts =
          value 2 <>
          metavar "INT")
 
-render :: Opts -> Doc -> Handle -> IO ()
-render o doc h = do
+output :: Opts -> Doc -> Handle -> IO ()
+output o doc h = do
     isTerminal <- hIsTerminalDevice stdout
     if color o && isTerminal
         then displayIO h (f doc)
@@ -50,7 +53,7 @@ render o doc h = do
             let docStr = unlines . map stripBlank . lines $ displayS (f $ plain doc) ""
             hPutStr h docStr
   where
-    f = renderSmart 1.0 (width o)
+    f = render (width o)
     stripBlank x
         | all isSpace x = []
         | otherwise = x
@@ -59,14 +62,11 @@ main :: IO ()
 main = do
     o <- execParser $ info (opts <**> helper) (fullDesc <> progDesc "Format a Cabal file")
     f <- maybe getContents readFile (file o)
-    case pretty (indent o) <$> parse f of
-        Error m s -> displayError (file o) m s
-        Warn warnings -> printWarnings warnings
-        Success doc ->
-            if inPlace o
-                then case file o of
-                         Just fname -> withFile fname WriteMode (render o doc)
-                         Nothing -> hPutStrLn stderr inPlaceErr >> exitFailure
-                else render o doc stdout
+    doc <- prettyWithIndent (indent o) <$> readCabalFile (file o) f
+    if inPlace o
+        then case file o of
+                 Just fname -> withFile fname WriteMode (output o doc)
+                 Nothing -> hPutStrLn stderr inPlaceErr >> exitFailure
+        else output o doc stdout
   where
     inPlaceErr = "stylish-cabal: --in-place specified, but I'm reading from stdin"
