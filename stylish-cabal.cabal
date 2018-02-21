@@ -7,7 +7,7 @@ license-file:       LICENSE
 author:             Jude Taylor
 maintainer:         me@jude.xyz
 tested-with:        GHC == 7.8.4, GHC == 7.10.3, GHC == 8.0.2, GHC == 8.2.2,
-                    GHC == 8.4.0.20180204
+                    GHC == 8.4.1
 category:           Language
 build-type:         Simple
 extra-source-files: ChangeLog.md
