@@ -1,4 +1,4 @@
-# stylish-cabal [![stylish-cabal](https://img.shields.io/hackage/v/stylish-cabal.svg)](https://hackage.haskell.org/package/stylish-cabal) [![stylish-cabal](https://travis-ci.org/pikajude/stylish-cabal.svg?branch=travis_ci)](https://travis-ci.org/pikajude/stylish-cabal)
+# stylish-cabal [![stylish-cabal](https://img.shields.io/hackage/v/stylish-cabal.svg)](https://hackage.haskell.org/package/stylish-cabal) [![stylish-cabal](https://travis-ci.org/pikajude/stylish-cabal.svg)](https://travis-ci.org/pikajude/stylish-cabal)
 
 Automatic formatting for Cabal files.
 
