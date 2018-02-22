@@ -9,18 +9,29 @@ import Options.Applicative hiding (ParserResult(..))
 import StylishCabal
 import System.Exit
 import System.IO
-
 #if !MIN_VERSION_base(4,11,0)
 import Data.Monoid
 #endif
-
 data Opts = Opts
     { file :: Maybe FilePath
     , inPlace :: Bool
     , color :: Bool
     , width :: Int
-    , indent :: Int
+    , renderOpts :: RenderOptions
     } deriving (Show)
+
+renderopts :: Parser RenderOptions
+renderopts =
+    RenderOptions <$>
+    option
+        auto
+        (long "indent" <> short 'n' <> help "Indent size in spaces" <> showDefault <>
+         value 2 <>
+         metavar "INT") <*>
+    switch
+        (long "simplify-versions" <> short 's' <>
+         help "Simplify version ranges present in the Cabal file, if possible" <>
+         showDefault)
 
 opts :: Parser Opts
 opts =
@@ -38,11 +49,7 @@ opts =
          showDefault <>
          value 90 <>
          metavar "INT") <*>
-    option
-        auto
-        (long "indent" <> short 'n' <> help "Indent size in spaces" <> showDefault <>
-         value 2 <>
-         metavar "INT")
+    renderopts
 
 output :: Opts -> Doc -> Handle -> IO ()
 output o doc h = do
@@ -62,7 +69,7 @@ main :: IO ()
 main = do
     o <- execParser $ info (opts <**> helper) (fullDesc <> progDesc "Format a Cabal file")
     f <- maybe getContents readFile (file o)
-    doc <- prettyWithIndent (indent o) <$> readCabalFile (file o) f
+    doc <- prettyOpts (renderOpts o) <$> readPackageDescription (file o) f
     if inPlace o
         then case file o of
                  Just fname -> withFile fname WriteMode (output o doc)

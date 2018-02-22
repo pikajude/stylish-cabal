@@ -25,12 +25,13 @@ import Prelude hiding ((<$>))
 import Text.PrettyPrint.ANSI.Leijen
 
 import Render.Lib
+import Render.Options
 import Types.Block
 import Types.Field
 
 deriving instance Ord ModuleReexport
 
-fieldValueToDoc _ k (Field _ f) =
+fieldValueToDoc k (Field _ f) =
     case f of
         Dependencies ds ->
             buildDepsToDoc k $ map (\(Dependency pn v) -> (P $ unPackageName pn, v)) ds
@@ -44,52 +45,50 @@ fieldValueToDoc _ k (Field _ f) =
         RexpModules rms ->
             buildDepsToDoc k $
             map (\rexp -> (P $ show $ rexpModuleDoc rexp, anyVersion)) rms
-        n -> colon <> indent (k + 1) (align $ val' n)
+        n -> val' n <&> \v -> colon <> indent (k + 1) (align v)
   where
-    val' (Str x) = string x
-    val' (File x) = filepath x
-    val' (Version v) = string $ showVersion v
+    val' (Str x) = pure $ string x
+    val' (File x) = pure $ filepath x
+    val' (Version v) = pure $ string $ showVersion v
     val' (CabalVersion v)
-        -- section syntax was introduced in Cabal 1.2. if no cabal-version
-        -- is specified in the source, we require >=1.2 to be present in
-        -- the output
-        | v == mkVersion [0] = renderVersion $ orLaterVersion (mkVersion [1, 2])
         -- up until Cabal 1.10, we have to specify '>=' with cabal-version
         | withinRange v (orEarlierVersion (mkVersion [1, 10])) =
-            renderVersion $ orLaterVersion v
-        | otherwise = string $ showVersion v
-    val' (License l) = string $ showLicense l
+            showVersionRange $ orLaterVersion v
+        | otherwise = pure $ string $ showVersion v
+    val' (License l) = pure $ string $ showLicense l
     val' (TestedWith ts) = renderTestedWith ts
-    val' (LongList fs) = vcat $ map filepath fs
-    val' (Commas fs) = fillSep $ punctuate comma $ map filepath fs
-    val' (Spaces ls) = fillSep $ map filepath ls
-    val' (Modules ms) = vcat $ map moduleDoc $ sort ms
-    val' (Module m) = moduleDoc m
+    val' (LongList fs) = pure $ vcat $ map filepath fs
+    val' (Commas fs) = pure $ fillSep $ punctuate comma $ map filepath fs
+    val' (Spaces ls) = pure $ fillSep $ map filepath ls
+    val' (Modules ms) = pure $ vcat $ map moduleDoc $ sort ms
+    val' (Module m) = pure $ moduleDoc m
     val' (Extensions es) = val' (LongList $ map showExtension es)
-    val' (FlibType ty) = string $ showFlibType ty
+    val' (FlibType ty) = pure $ string $ showFlibType ty
     val' (FlibOptions fs) = val' $ Spaces $ map showFlibOpt fs
     val' x = error $ show x
-fieldValueToDoc n k (Description s) = descriptionToDoc n k s
+fieldValueToDoc k (Description s) = descriptionToDoc k s
 
-descriptionToDoc n k s =
-    (<>) colon $
-    nest n $
-    case paragraphs of
-        [p]
-            -- i still don't know what this does
-         ->
-            group $
-            flatAlt
-                (linebreak <> fillSep (map text $ words p))
-                (indent (k + 1) (string p))
-        xs -> line <> vcat (intersperse (green dot) (map paragraph xs))
+descriptionToDoc k s = do
+    n <- asks indentSize
+    return $
+        (<>) colon $
+        nest n $
+        case paragraphs of
+            [p]
+                -- i still don't know what this does
+             ->
+                group $
+                flatAlt
+                    (linebreak <> fillSep (map text $ words p))
+                    (indent (k + 1) (string p))
+            xs -> line <> vcat (intersperse (green dot) (map paragraph xs))
   where
     paragraphs = map (unwords . lines) $ splitOn "\n\n" s
     paragraph t = fillSep (map text $ words t)
 
 mixinsToDoc k bs
-    | k == 0 = deps ": "
-    | otherwise = colon <> indent (k - 1) (deps "  ")
+    | k == 0 = pure $ deps ": "
+    | otherwise = pure $ colon <> indent (k - 1) (deps "  ")
   where
     deps lsep =
         encloseSep (string lsep) empty (string ", ") $
@@ -128,47 +127,54 @@ mixinsToDoc k bs
     renaming (m1, m2) = moduleDoc m1 <+> string "as" <+> moduleDoc m2
     align' n doc = column (\ko -> nesting (\i -> nest (ko - i - n) doc))
 
+buildDepsToDoc :: Int -> [(P, VersionRange)] -> Render Doc
 buildDepsToDoc k bs
     | k == 0 = deps ": "
-    | otherwise = colon <> indent (k - 1) (deps "  ")
+    | otherwise = fmap (\r -> colon <> indent (k - 1) r) (deps "  ")
   where
-    deps lsep =
-        encloseSep
-            (string lsep)
-            empty
-            (string ", ")
-            (map showField $ sortBy (comparing fst) bs)
+    deps lsep = do
+        fs <- mapM showField $ sortBy (comparing fst) bs
+        return $ encloseSep (string lsep) empty (string ", ") fs
     longest = maximum $ map (length . unP . fst) bs
     showField (P fName, fieldVal)
-        | fieldVal == anyVersion = string fName
+        | fieldVal == anyVersion = pure $ string fName
         | otherwise =
-            width (string fName) $ \fn ->
-                let delt n = indent (n + 1) (renderVersion fieldVal)
-                 in flatAlt (delt (longest - fn)) (delt 0)
+            widthR (string fName) $ \fn -> do
+                shown <- showVersionRange fieldVal
+                let delt n = indent (n + 1) shown
+                 in pure $ flatAlt (delt (longest - fn)) (delt 0)
 
-fieldsToDoc n fs =
-    vcat $
-    map (\field ->
-             width (dullblue $ string (fieldName field)) $ \fn ->
-                 fieldValueToDoc n (longestField - fn) field)
+fieldsToDoc :: [Field] -> Render Doc
+fieldsToDoc fs =
+    fmap vcat $
+    mapM
+        (\field ->
+             widthR (dullblue $ string (fieldName field)) $ \fn ->
+                 fieldValueToDoc (longestField - fn) field)
         fs
   where
     longestField = maximum $ map (length . fieldName) fs
 
-renderBlock n (Block t fs blocks) =
-    (if isElse t
-         then id
-         else (<>) line)
-        (renderBlockHead t) <$$>
-    indent n (align $ blockBodyToDoc n fs blocks)
+renderBlock :: Block -> Render Doc
+renderBlock (Block t fs blocks) = do
+    blkhead <- renderBlockHead t
+    body <- indentM . align =<< blockBodyToDoc fs blocks
+    return $
+        (if isElse t
+             then id
+             else (<>) line)
+            blkhead <$$>
+        body
 
-blockBodyToDoc n fs blocks =
-    fieldsToDoc
-        n
-        (if null fs'
-             then buildable'
-             else fs') <>
-    vcat (empty : map (renderBlock n) blocks)
+blockBodyToDoc :: [Maybe Field] -> [Block] -> Render Doc
+blockBodyToDoc fs blocks = do
+    fields <-
+        fieldsToDoc
+            (if null fs'
+                 then buildable'
+                 else fs')
+    subblocks <- mapM renderBlock blocks
+    return $ fields <> vcat (empty : subblocks)
   where
     fs' = catMaybes fs
     buildable' = [fromJust $ stringField "buildable" "True"]

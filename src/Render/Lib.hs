@@ -1,10 +1,11 @@
+{-# Language ImplicitParams #-}
 {-# Language FlexibleContexts #-}
 {-# Language OverloadedStrings #-}
 
 module Render.Lib
     ( P(..)
     , renderBlockHead
-    , renderVersion
+    , showVersionRange
     , showExtension
     , moduleDoc
     , rexpModuleDoc
@@ -29,7 +30,8 @@ import Distribution.Types.PackageName
 import Distribution.Types.UnqualComponentName
 import Distribution.Version
 import Language.Haskell.Extension
-import Text.PrettyPrint.ANSI.Leijen
+import Render.Options
+import Text.PrettyPrint.ANSI.Leijen hiding ((<$>))
 import Types.Block
 
 newtype P = P
@@ -66,34 +68,39 @@ showL :: String -> Maybe Version -> String
 showL s Nothing = s
 showL s (Just v) = s ++ "-" ++ showVersion v
 
-renderTestedWith =
-    fillSep .
-    punctuate comma .
-    map (\(compiler, vers) -> showVersioned (showCompiler compiler, vers))
+renderTestedWith ts = do
+    tests <- mapM (\(compiler, vers) -> showVersioned (showCompiler compiler, vers)) ts
+    return $ fillSep . punctuate comma $ tests
   where
     showCompiler (OtherCompiler x) = x
     showCompiler HaskellSuite {} =
         error "Not sure what to do with HaskellSuite value in tested-with field"
     showCompiler x = show x
 
-showVersioned :: (String, VersionRange) -> Doc
+showVersioned :: (String, VersionRange) -> Render Doc
 showVersioned (pn, v')
-    | v' == anyVersion = string pn
-    | otherwise = string pn <+> renderVersion v'
+    | v' == anyVersion = pure $ string pn
+    | otherwise = fmap (string pn <+>) (showVersionRange v')
 
-renderVersion =
-    foldVersionRange'
-        empty
-        (\v -> green "==" <+> dullyellow (string (showVersion v)))
-        (\v -> green ">" <+> dullyellow (string (showVersion v)))
-        (\v -> green "<" <+> dullyellow (string (showVersion v)))
-        (\v -> green ">=" <+> dullyellow (string (showVersion v)))
-        (\v -> green "<=" <+> dullyellow (string (showVersion v)))
-        (\v _ -> green "==" <+> dullyellow (string (showVersion v) <> ".*"))
-        (\v _ -> green "^>=" <+> dullyellow (string (showVersion v)))
-        (\a b -> a <+> green "||" <+> b)
-        (\a b -> a <+> green "&&" <+> b)
-        parens
+showVersionRange r = do
+    opts <- ask
+    return $
+        foldVersionRange'
+            empty
+            (\v -> green "==" <+> dullyellow (string (showVersion v)))
+            (\v -> green ">" <+> dullyellow (string (showVersion v)))
+            (\v -> green "<" <+> dullyellow (string (showVersion v)))
+            (\v -> green ">=" <+> dullyellow (string (showVersion v)))
+            (\v -> green "<=" <+> dullyellow (string (showVersion v)))
+            (\v _ -> green "==" <+> dullyellow (string (showVersion v) <> ".*"))
+            (\v _ -> green "^>=" <+> dullyellow (string (showVersion v)))
+            (\a b -> a <+> green "||" <+> b)
+            (\a b -> a <+> green "&&" <+> b)
+            parens .
+        (if simplifyVersions opts
+             then simplifyVersionRange
+             else id) $
+        r
 
 filepath :: String -> Doc
 filepath x
@@ -116,39 +123,48 @@ showExtension x = error $ show x
 exeDependencyAsDependency (ExeDependency pkg comp vers) =
     (P $ unPackageName pkg ++ ":" ++ unUnqualComponentName comp, vers)
 
-renderBlockHead CustomSetup = dullgreen "custom-setup"
-renderBlockHead (SourceRepo_ k) = dullgreen "source-repository" <+> showKind k
+renderBlockHead (If c) = (dullblue "if" <+>) <$> showPredicate c
+renderBlockHead x = pure $ r x
   where
-    showKind RepoHead = "head"
-    showKind RepoThis = "this"
-    showKind (RepoKindUnknown x) = string x
-renderBlockHead (Library_ Nothing) = dullgreen "library"
-renderBlockHead (Library_ (Just l)) = dullgreen "library" <+> string l
-renderBlockHead (ForeignLib_ l) = dullgreen "foreign-library" <+> string l
-renderBlockHead (Exe_ e) = dullgreen "executable" <+> string e
-renderBlockHead (TestSuite_ t) = dullgreen "test-suite" <+> string t
-renderBlockHead (Benchmark_ b) = dullgreen "benchmark" <+> string b
-renderBlockHead (Flag_ s) = dullgreen "flag" <+> string s
-renderBlockHead (If c) = dullblue "if" <+> showPredicate c
-renderBlockHead Else = dullblue "else"
+    r CustomSetup = dullgreen "custom-setup"
+    r (SourceRepo_ k) = dullgreen "source-repository" <+> showKind k
+      where
+        showKind RepoHead = "head"
+        showKind RepoThis = "this"
+        showKind (RepoKindUnknown y) = string y
+    r (Library_ Nothing) = dullgreen "library"
+    r (Library_ (Just l)) = dullgreen "library" <+> string l
+    r (ForeignLib_ l) = dullgreen "foreign-library" <+> string l
+    r (Exe_ e) = dullgreen "executable" <+> string e
+    r (TestSuite_ t) = dullgreen "test-suite" <+> string t
+    r (Benchmark_ b) = dullgreen "benchmark" <+> string b
+    r (Flag_ s) = dullgreen "flag" <+> string s
+    r Else = dullblue "else"
+    r _ = error "unreachable"
 
+showPredicate :: Condition ConfVar -> Render Doc
 showPredicate (Var x) = showVar x
-showPredicate (CNot p) = dullmagenta (string "!") <> maybeParens p
-showPredicate (CAnd a b) = maybeParens a <+> dullblue (string "&&") <+> maybeParens b
-showPredicate (COr a b) = maybeParens a <+> dullblue (string "||") <+> maybeParens b
-showPredicate (Lit b) = string $ show b
+showPredicate (CNot p) = fmap (dullmagenta (string "!") <>) (maybeParens p)
+showPredicate (CAnd a b) =
+    liftM2 (\x y -> x <+> dullblue (string "&&") <+> y) (maybeParens a) (maybeParens b)
+showPredicate (COr a b) =
+    liftM2 (\x y -> x <+> dullblue (string "||") <+> y) (maybeParens a) (maybeParens b)
+showPredicate (Lit b) = pure $ string $ show b
 
-maybeParens p = case p of
-    Lit {} -> showPredicate p
-    Var {} -> showPredicate p
-    CNot {} -> showPredicate p
-    _ -> parens (showPredicate p)
+maybeParens p =
+    case p of
+        Lit {} -> showPredicate p
+        Var {} -> showPredicate p
+        CNot {} -> showPredicate p
+        _ -> parens <$> showPredicate p
 
-showVar (Impl compiler vers) =
-    dullgreen $
-    string "impl" <> parens (dullblue $ showVersioned (map toLower $ show compiler, vers))
-showVar (Flag f) = dullgreen $ string "flag" <> parens (dullblue $ string (unFlagName f))
+showVar :: ConfVar -> Render Doc
+showVar (Impl compiler vers) = do
+    v <- showVersioned (map toLower $ show compiler, vers)
+    pure $ dullgreen $ string "impl" <> parens (dullblue v)
+showVar (Flag f) =
+    pure $ dullgreen $ string "flag" <> parens (dullblue $ string (unFlagName f))
 showVar (OS w) =
-    dullgreen $ string "os" <> parens (dullblue $ string $ map toLower $ show w)
+    pure $ dullgreen $ string "os" <> parens (dullblue $ string $ map toLower $ show w)
 showVar (Arch a) =
-    dullgreen $ string "arch" <> parens (dullblue $ string $ map toLower $ show a)
+    pure $ dullgreen $ string "arch" <> parens (dullblue $ string $ map toLower $ show a)

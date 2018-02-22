@@ -25,7 +25,7 @@ extra-doc-files: docfile1, docfile2
 extra-tmp-files: tmpfile1, tmpfile2
 
 custom-setup
-    setup-depends: base >= 4.5 && < 4.11, Cabal < 1.25
+    setup-depends: base >= 4.5 && < 4.11, Cabal >= 1.25 && <= 1.25
 
 source-repository head
     type: git

@@ -6,8 +6,8 @@
 {-# Language DeriveFunctor #-}
 
 module Parse
-    ( parseCabalFile
-    , readCabalFile
+    ( parsePackageDescription
+    , readPackageDescription
     , displayError
     , printWarnings
     , Result(..)
@@ -17,7 +17,7 @@ module Parse
 import Control.DeepSeq
 import Data.Data
 import Data.Maybe
-import Distribution.PackageDescription.Parse
+import Distribution.PackageDescription.Parse (parseGenericPackageDescription)
 import Distribution.ParseUtils
 import Distribution.Simple.Utils
 import Distribution.Verbosity
@@ -33,7 +33,7 @@ data Result a
             String -- ^ Parse error on the given line.
     | Warn [PWarning] -- ^ Warnings emitted during parse.
     | Success a -- ^ The input is a compliant package description.
-    deriving (Show, Eq, Functor, Generic, Typeable, Data)
+    deriving (Show, Eq, Functor, Generic, Generic1, Typeable, Data)
 
 -- | Case analysis for 'Result'.
 result :: (Maybe LineNo -> String -> b) -> ([PWarning] -> b) -> (a -> b) -> Result a -> b
@@ -48,11 +48,9 @@ instance NFData a => NFData (Result a)
 deriving instance Generic PWarning
 
 deriving instance Data PWarning
-
 #if !MIN_VERSION_base(4,8,0)
 deriving instance Typeable PWarning
 #endif
-
 instance NFData PWarning
 
 -- | This function is similar to Cabal's own file parser, except that it
@@ -60,17 +58,18 @@ instance NFData PWarning
 -- different behaviors accepted by different Cabal parser versions. Parse
 -- warnings generally indicate a version-related inconsistency, so we play
 -- it safe here.
-parseCabalFile input =
+parsePackageDescription input =
     case parseGenericPackageDescription input of
         ParseFailed e -> uncurry Error $ locatedErrorMsg e
         ParseOk warnings x
             | null warnings -> Success x
             | otherwise -> Warn $ reverse warnings
 
--- | Shorthand to combine 'parseCabalFile' and one of 'printWarnings' or
+-- | Shorthand to combine 'parsePackageDescription' and one of 'printWarnings' or
 -- 'displayError'. The given 'FilePath' is used only for error messages and
 -- is not read from.
-readCabalFile fpath = result (displayError fpath) printWarnings return . parseCabalFile
+readPackageDescription fpath =
+    result (displayError fpath) printWarnings return . parsePackageDescription
 
 -- | Print some warnings to 'stderr' and exit.
 printWarnings ps = mapM_ (warn normal . showPWarning "<input>") ps >> exitFailure

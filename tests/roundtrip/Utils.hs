@@ -4,12 +4,10 @@
 
 module Utils where
 
-import Control.Monad
 import Data.List
 import Distribution.PackageDescription.Parse
-import Distribution.ParseUtils (PWarning(..))
 import SortedDesc
-import StylishCabal
+import StylishCabal as S
 import Test.Hspec.Core.Spec
 import Test.Hspec.Expectations.Pretty
 #if !MIN_VERSION_base(4,8,0)
@@ -21,27 +19,19 @@ deriving instance Eq a => Eq (ParseResult a)
 expectParse cabalStr = do
     let doc =
             (`displayS` "") . render 80 . plain . pretty <$>
-            parseCabalFile cabalStr
+            S.parsePackageDescription cabalStr
     case doc of
-        StylishCabal.Success rendered -> do
+        S.Success rendered -> do
             let original =
                     from <$> parse' cabalStr :: ParseResult SGenericPackageDescription
                 new = from <$> parse' rendered
-            case new of
-                ParseOk pws _ -> skipIfRedFlags pws
-                _ -> pure ()
             shouldBe original new
         Warn {} ->
             expectationFailure
                 "SKIP Warnings generated from original file, cannot guarantee consistency of output"
-        StylishCabal.Error {} ->
+        S.Error {} ->
             expectationFailure "SKIP Original cabal file does not parse"
   where
-    skipIfRedFlags [] = return ()
-    skipIfRedFlags pws =
-        when (any (\(PWarning p) -> "must specify at least" `isInfixOf` p) pws) $
-        expectationFailure
-            "SKIP Original specified cabal-version is too old for section syntax"
     parse' = parseGenericPackageDescription
 
 applySkips i =

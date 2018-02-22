@@ -1,44 +1,51 @@
+{-# Language ImplicitParams #-}
 {-# Language CPP #-}
 
 -- | Cabal file formatter.
 module StylishCabal
-    ( -- * Formatting Cabal files
-      pretty
-    , prettyWithIndent
+      -- * Formatting Cabal files
+    ( pretty
+    , prettyOpts
+    , RenderOptions(..)
     , render
       -- * Parsing utilities
-    , parseCabalFile
-    , readCabalFile
+    , parsePackageDescription
+    , readPackageDescription
     , Result(..)
     , result
     , printWarnings
     , displayError
     -- * Reexports
+    , Default(..)
     , Doc
     , plain
     , displayIO
     , displayS
     ) where
 
-import Text.PrettyPrint.ANSI.Leijen (Doc, displayIO, displayS, line, plain, renderSmart)
-
-import Parse
-import Render
-import Transform
-
+import Data.Default
+import Distribution.PackageDescription (GenericPackageDescription)
+import Text.PrettyPrint.ANSI.Leijen hiding ((<>), pretty)
 #if !MIN_VERSION_base(4,11,0)
 import Data.Monoid
 #endif
+import Parse
+import Render
+import Render.Options
+import Transform
 
 -- | @pretty pkg@ produces a colorized, formatted textual representation of
 -- a given 'Distribution.PackageDescription.GenericPackageDescription',
--- with a default indent width of 2.
+-- using 'Default' options.
 --
 -- To remove syntax highlighting, you can use 'plain'.
-pretty = prettyWithIndent 2
+pretty :: GenericPackageDescription -> Doc
+pretty = prettyOpts def
 
--- | Like 'pretty', but allows you to specify an indent size.
-prettyWithIndent i gpd = uncurry (blockBodyToDoc i) (toBlocks gpd) <> line
+-- | 'pretty' with specified options.
+prettyOpts :: RenderOptions -> GenericPackageDescription -> Doc
+prettyOpts opts gpd = runReader (uncurry blockBodyToDoc $ toBlocks gpd) opts <> line
 
 -- | Render the given 'Doc' with the given width.
+render :: Int -> Doc -> SimpleDoc
 render = renderSmart 1.0

@@ -1,5 +1,5 @@
 name:               stylish-cabal
-version:            0.2.0.0
+version:            0.3.0.0
 synopsis:           Format Cabal files
 description:        A tool for nicely formatting your Cabal file.
 license:            BSD3
@@ -40,11 +40,19 @@ library
   other-modules:      Parse
                       Render
                       Render.Lib
+                      Render.Options
                       Transform
                       Types.Block
                       Types.Field
   hs-source-dirs:     src
-  build-depends:      base == 4.*, Cabal == 2.0.*, ansi-wl-pprint, deepseq, split
+  build-depends:      base                 == 4.*
+                    , Cabal                == 2.0.*
+                    , ansi-wl-pprint
+                    , data-default
+                    , deepseq
+                    , mtl
+                    , optparse-applicative
+                    , split
   default-language:   Haskell2010
   default-extensions: NoMonomorphismRestriction
   ghc-options:        -Wall -fno-warn-missing-signatures

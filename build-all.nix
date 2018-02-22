@@ -18,4 +18,4 @@ let source = pkgs.runCommand "src" {
     '';
 in builtins.map
 (compiler: callPackage source { inherit compiler; nixpkgs = pkgs; test = true; })
-    [ /* "ghc763" */ "ghc784" "ghc7103" "ghc802" "ghc822" "ghc841" ]
+    [ "ghc784" "ghc7103" "ghc802" "ghc822" "ghc841" /* "ghc763" "ghc841" */ ]
