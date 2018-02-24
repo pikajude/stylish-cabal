@@ -11,6 +11,7 @@ import qualified GHC.Generics as GHC
 import Generics.SOP
 import Generics.SOP.TH
 import Instances
+import Prelude.Compat
 import Pretty
 import StylishCabal
 import Test.Hspec hiding (shouldBe)

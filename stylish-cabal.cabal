@@ -6,8 +6,7 @@ license:            BSD3
 license-file:       LICENSE
 author:             Jude Taylor
 maintainer:         me@jude.xyz
-tested-with:        GHC == 7.6.3, GHC == 7.8.4, GHC == 7.10.3, GHC == 8.0.2, GHC == 8.2.2,
-                    GHC == 8.4.1
+tested-with:        GHC == 7.6.3, GHC == 7.8.4, GHC == 7.10.3, GHC == 8.0.2, GHC == 8.2.2
 category:           Language
 build-type:         Simple
 extra-source-files: ChangeLog.md
@@ -48,6 +47,7 @@ library
   build-depends:      base                 == 4.*
                     , Cabal                == 2.0.*
                     , ansi-wl-pprint
+                    , base-compat
                     , data-default
                     , deepseq
                     , mtl
@@ -55,16 +55,22 @@ library
                     , split
   default-language:   Haskell2010
   default-extensions: NoMonomorphismRestriction
+                      NoImplicitPrelude
   ghc-options:        -Wall -fno-warn-missing-signatures
 
   if flag(werror)
     ghc-options: -Werror
 
 executable stylish-cabal
-  main-is:          Main.hs
-  build-depends:    base, ansi-wl-pprint, optparse-applicative, stylish-cabal
-  default-language: Haskell2010
-  ghc-options:      -Wall
+  main-is:            Main.hs
+  build-depends:      base
+                    , ansi-wl-pprint
+                    , base-compat
+                    , optparse-applicative
+                    , stylish-cabal
+  default-language:   Haskell2010
+  default-extensions: NoImplicitPrelude
+  ghc-options:        -Wall
 
   if flag(werror)
     ghc-options: -Werror
@@ -79,6 +85,7 @@ test-suite strictness
                     , Cabal
                     , StrictCheck
                     , ansi-wl-pprint
+                    , base-compat
                     , bytestring
                     , deepseq
                     , generics-sop
@@ -86,7 +93,7 @@ test-suite strictness
                     , hspec-expectations-pretty-diff
                     , stylish-cabal
   default-language:   Haskell2010
-  default-extensions: CPP
+  default-extensions: NoImplicitPrelude
   ghc-options:        -freduction-depth=0
 
   if flag(werror)
@@ -104,40 +111,44 @@ test-suite roundtrip
   build-depends:      base
                     , Cabal
                     , ansi-wl-pprint
+                    , base-compat
                     , containers
                     , hspec
                     , hspec-core
                     , hspec-expectations-pretty-diff
                     , stylish-cabal
   default-language:   Haskell2010
-  default-extensions: CPP
+  default-extensions: NoImplicitPrelude
   ghc-options:        -Wall -fno-warn-missing-signatures
 
   if flag(werror)
     ghc-options: -Werror
 
 test-suite roundtrip-hackage
-  type:             exitcode-stdio-1.0
-  main-is:          Hackage.hs
-  other-modules:    SortedDesc
-                    Utils
-  hs-source-dirs:   tests/roundtrip
-  build-depends:    base
-                  , Cabal
-                  , aeson
-                  , ansi-wl-pprint
-                  , containers
-                  , hspec
-                  , hspec-core
-                  , hspec-expectations-pretty-diff
-                  , lens
-                  , mwc-random
-                  , stylish-cabal
-                  , utf8-string
-                  , vector
-                  , wreq
-  default-language: Haskell2010
-  ghc-options:      -threaded -rtsopts -with-rtsopts=-N -Wall -fno-warn-missing-signatures
+  type:               exitcode-stdio-1.0
+  main-is:            Hackage.hs
+  other-modules:      SortedDesc
+                      Utils
+  hs-source-dirs:     tests/roundtrip
+  build-depends:      base
+                    , Cabal
+                    , aeson
+                    , ansi-wl-pprint
+                    , base-compat
+                    , containers
+                    , hspec
+                    , hspec-core
+                    , hspec-expectations-pretty-diff
+                    , lens
+                    , mwc-random
+                    , stylish-cabal
+                    , utf8-string
+                    , vector
+                    , wreq
+  default-language:   Haskell2010
+  default-extensions: NoImplicitPrelude
+  ghc-options:        -threaded -rtsopts -with-rtsopts=-N -Wall
+                      -fno-warn-missing-signatures
 
   if flag(werror)
     ghc-options: -Werror

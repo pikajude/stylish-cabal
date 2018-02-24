@@ -1,17 +1,16 @@
-{-# Language CPP #-}
 {-# Language NoMonomorphismRestriction #-}
 {-# Language OverloadedStrings #-}
 
 module Main where
 
 import Data.Char
+import Data.Monoid.Compat
 import Options.Applicative hiding (ParserResult(..))
+import Prelude.Compat
 import StylishCabal
 import System.Exit
 import System.IO
-#if !MIN_VERSION_base(4,11,0)
-import Data.Monoid
-#endif
+
 data Opts = Opts
     { file :: Maybe FilePath
     , inPlace :: Bool

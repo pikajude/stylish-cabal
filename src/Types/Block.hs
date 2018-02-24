@@ -1,6 +1,7 @@
 module Types.Block where
 
 import Distribution.PackageDescription
+import Prelude.Compat
 import Types.Field
 
 type File = ([Maybe Field], [Block])

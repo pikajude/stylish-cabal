@@ -1,19 +1,16 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-{-# Language CPP #-}
 {-# Language StandaloneDeriving #-}
 
 module Utils where
 
-import Data.List
+import Data.List.Compat
 import Distribution.PackageDescription.Parse
+import Prelude.Compat
 import SortedDesc
 import StylishCabal as S
 import Test.Hspec.Core.Spec
 import Test.Hspec.Expectations.Pretty
-#if !MIN_VERSION_base(4,8,0)
-import Control.Applicative (pure)
-import Data.Functor ((<$>))
-#endif
+
 deriving instance Eq a => Eq (ParseResult a)
 
 expectParse cabalStr = do
@@ -29,8 +26,7 @@ expectParse cabalStr = do
         Warn {} ->
             expectationFailure
                 "SKIP Warnings generated from original file, cannot guarantee consistency of output"
-        S.Error {} ->
-            expectationFailure "SKIP Original cabal file does not parse"
+        S.Error {} -> expectationFailure "SKIP Original cabal file does not parse"
   where
     parse' = parseGenericPackageDescription
 

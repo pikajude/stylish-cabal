@@ -1,3 +1,4 @@
+{-# Language CPP #-}
 {-# Language DataKinds #-}
 {-# Language DeriveAnyClass #-}
 {-# Language TemplateHaskell #-}
@@ -59,6 +60,7 @@ import Distribution.Utils.ShortText
 import Distribution.Version
 import Generics.SOP.TH
 import Language.Haskell.Extension
+import Prelude.Compat
 import Test.StrictCheck.Instances
 import Test.StrictCheck.Instances.Tools
 import Test.StrictCheck.Shaped

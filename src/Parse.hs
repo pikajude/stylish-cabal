@@ -1,5 +1,4 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-{-# Language CPP #-}
 {-# Language StandaloneDeriving #-}
 {-# Language DeriveGeneric #-}
 {-# Language DeriveDataTypeable #-}
@@ -22,6 +21,7 @@ import Distribution.ParseUtils
 import Distribution.Simple.Utils
 import Distribution.Verbosity
 import GHC.Generics
+import Prelude.Compat
 import System.Environment
 import System.Exit
 import System.IO
@@ -48,9 +48,9 @@ instance NFData a => NFData (Result a)
 deriving instance Generic PWarning
 
 deriving instance Data PWarning
-#if !MIN_VERSION_base(4,8,0)
+
 deriving instance Typeable PWarning
-#endif
+
 instance NFData PWarning
 
 -- | This function is similar to Cabal's own file parser, except that it

@@ -7,10 +7,11 @@ module Render.Options
     , module Control.Monad.Reader
     ) where
 
-import Control.Monad.Reader
+import Control.Monad.Reader hiding (mapM)
 import Data.Data
 import Data.Default
 import GHC.Generics
+import Prelude.Compat
 import Text.PrettyPrint.ANSI.Leijen (Doc, indent, width)
 
 type Render = Reader RenderOptions

@@ -5,6 +5,7 @@ module Pretty where
 
 import Data.Bifunctor
 import Generics.SOP (Associativity(..))
+import Prelude.Compat
 import Test.StrictCheck.Observe
 import Test.StrictCheck.Shaped
 import Text.PrettyPrint.ANSI.Leijen

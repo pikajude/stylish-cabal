@@ -18,7 +18,7 @@ module Render.Lib
     ) where
 
 import Data.Char
-import Data.List
+import Data.List.Compat
 import Distribution.Compiler
 import Distribution.License
 import Distribution.ModuleName
@@ -30,8 +30,10 @@ import Distribution.Types.PackageName
 import Distribution.Types.UnqualComponentName
 import Distribution.Version
 import Language.Haskell.Extension
-import Render.Options
+import Prelude.Compat
 import Text.PrettyPrint.ANSI.Leijen hiding ((<$>))
+
+import Render.Options
 import Types.Block
 
 newtype P = P

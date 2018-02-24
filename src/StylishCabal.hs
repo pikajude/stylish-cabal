@@ -1,5 +1,4 @@
 {-# Language ImplicitParams #-}
-{-# Language CPP #-}
 
 -- | Cabal file formatter.
 module StylishCabal
@@ -25,10 +24,9 @@ module StylishCabal
 
 import Data.Default
 import Distribution.PackageDescription (GenericPackageDescription)
-import Text.PrettyPrint.ANSI.Leijen hiding ((<>), pretty)
-#if !MIN_VERSION_base(4,11,0)
-import Data.Monoid
-#endif
+import Prelude.Compat
+import Text.PrettyPrint.ANSI.Leijen hiding (pretty)
+
 import Parse
 import Render
 import Render.Options

@@ -4,6 +4,7 @@ module Main where
 
 import Test.Hspec
 import Utils
+import Prelude.Compat
 
 main :: IO ()
 main =

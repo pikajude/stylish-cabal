@@ -1,5 +1,4 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-{-# Language CPP #-}
 {-# Language NamedFieldPuns #-}
 {-# Language RecordWildCards #-}
 {-# Language StandaloneDeriving #-}
@@ -23,9 +22,7 @@ import Distribution.Types.PkgconfigDependency
 import Distribution.Types.UnqualComponentName
 import Distribution.Version
 import Language.Haskell.Extension
-#if !MIN_VERSION_base(4,8,0)
-import Data.Functor ((<$>))
-#endif
+import Prelude.Compat
 
 data SGenericPackageDescription = SGenericPackageDescription
     { packageDescription :: SPackageDescription

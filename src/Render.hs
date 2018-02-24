@@ -7,7 +7,7 @@ module Render
     ( blockBodyToDoc
     ) where
 
-import Data.List hiding (group)
+import Data.List.Compat hiding (group)
 import Data.List.Split
 import Data.Maybe
 import Data.Ord
@@ -21,7 +21,7 @@ import Distribution.Types.PackageName
 import Distribution.Types.PkgconfigDependency
 import Distribution.Types.PkgconfigName
 import Distribution.Version
-import Prelude hiding ((<$>))
+import Prelude.Compat hiding ((<$>))
 import Text.PrettyPrint.ANSI.Leijen
 
 import Render.Lib

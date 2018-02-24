@@ -43,6 +43,7 @@ import Distribution.Types.ModuleReexport
 import Distribution.Types.PkgconfigDependency
 import Distribution.Version
 import Language.Haskell.Extension
+import Prelude.Compat
 
 data FieldVal
     = Dependencies [Dependency]

@@ -1,4 +1,3 @@
-{-# Language CPP #-}
 {-# Language FlexibleContexts #-}
 {-# Language RecordWildCards #-}
 
@@ -23,9 +22,7 @@ import Distribution.Types.PackageId
 import Distribution.Types.PackageName
 import Distribution.Types.UnqualComponentName
 import Distribution.Version
-#if !MIN_VERSION_base(4,8,0)
-import Data.Functor ((<$>))
-#endif
+import Prelude.Compat
 
 import Types.Block
 import Types.Field
