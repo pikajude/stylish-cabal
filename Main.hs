@@ -3,6 +3,7 @@
 
 module Main where
 
+import qualified Data.ByteString as B
 import Data.Char
 import Data.Monoid.Compat
 import Options.Applicative hiding (ParserResult(..))
@@ -52,7 +53,7 @@ opts =
 
 output :: Opts -> Doc -> Handle -> IO ()
 output o doc h = do
-    isTerminal <- hIsTerminalDevice stdout
+    isTerminal <- hIsTerminalDevice h
     if color o && isTerminal
         then displayIO h (f doc)
         else do
@@ -67,7 +68,7 @@ output o doc h = do
 main :: IO ()
 main = do
     o <- execParser $ info (opts <**> helper) (fullDesc <> progDesc "Format a Cabal file")
-    f <- maybe getContents readFile (file o)
+    f <- maybe B.getContents B.readFile (file o)
     doc <- prettyOpts (renderOpts o) <$> readPackageDescription (file o) f
     if inPlace o
         then case file o of

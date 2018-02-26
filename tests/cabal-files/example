@@ -1,8 +1,8 @@
+cabal-version: 2.1
 name: example-package
 version: 1.2.3.4
-cabal-version: >=1.8
 build-type: Custom
-license: MIT
+license: GPL-2.0+
 license-files: LICENSE1, "license with spaces"
 copyright: (c) 2018 John Doe
 author: John Doe
@@ -51,6 +51,9 @@ library example-internal
 
 library
     exposed-modules: Example
+    virtual-modules: Example.Prim, Example.NonExistentModule
+    extra-bundled-libraries: libHSrts libsomeextralibrary
+    extra-library-flavours: dyn, p, p_o, o
     exposed: False
     reexported-modules: base:Numeric as MyNumericModule
     signatures: ExampleSig
@@ -70,13 +73,19 @@ library
     includes: example.h
     install-includes: output.h
     include-dirs: include
-    c-sources: csource.c
-    js-sources: jssource.js
+    c-sources: csource.c, vendor/other-source.c, vendor/other-source.h
+    js-sources: jssource.js, lib/jquery.js
+    asm-sources: fftw.s, long/filepath/can/go/here.s
+    cmm-sources: typechecker-hack.cmm
+    cxx-sources: nix-build.hh, lib/nix-build.cc
     extra-libraries: iconv
     extra-ghci-libraries: webkit
     extra-lib-dirs: lib, lib2
     cc-options: -compat
+    cmm-options: -v3 -Wl,-t
+    cxx-options: -stdlib=libstdc++
     cpp-options: -DFOO=1
+    asm-options: -asm -c foobar
     ld-options: -static
     pkgconfig-depends: gtk+-2.0 >= 2.10, cairo >= 1.0
     frameworks: CoreAudio

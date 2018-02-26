@@ -1,6 +1,5 @@
 {-# Language CPP #-}
 {-# Language DataKinds #-}
-{-# Language DeriveAnyClass #-}
 {-# Language TemplateHaskell #-}
 {-# Language TypeFamilies #-}
 {-# Language StandaloneDeriving #-}
@@ -13,7 +12,6 @@
     render = prettyPrim
 
 #define DERIVE(c) deriveGeneric ''c; instance Shaped c
-#define DERIVEN(c) DERIVE(c); deriving instance NFData c
 
 module Instances where
 
@@ -21,6 +19,7 @@ import Data.ByteString.Short
 import Data.Word
 import Distribution.Compiler
 import Control.DeepSeq
+import qualified Distribution.SPDX as SPDX
 import Distribution.License
 import Distribution.ModuleName
 import Distribution.Types.Benchmark
@@ -66,15 +65,40 @@ import Test.StrictCheck.Instances.Tools
 import Test.StrictCheck.Shaped
 
 DERIVE(Arch)
+DERIVE(Benchmark)
+DERIVE(BenchmarkInterface)
+DERIVE(BenchmarkType)
+DERIVE(BuildInfo)
 DERIVE(BuildType)
+DERIVE(CompilerFlavor)
 DERIVE(ConfVar)
 DERIVE(Dependency)
 DERIVE(ExeDependency)
+DERIVE(Executable)
+DERIVE(ExecutableScope)
+DERIVE(Extension)
 DERIVE(Flag)
 DERIVE(FlagName)
+DERIVE(ForeignLib)
+DERIVE(ForeignLibOption)
+DERIVE(ForeignLibType)
 DERIVE(GenericPackageDescription)
+DERIVE(IncludeRenaming)
+DERIVE(KnownExtension)
+DERIVE(Language)
 DERIVE(LegacyExeDependency)
+DERIVE(LibVersionInfo)
+DERIVE(Library)
 DERIVE(License)
+DERIVE(SPDX.License)
+DERIVE(SPDX.LicenseExpression)
+DERIVE(SPDX.SimpleLicenseExpression)
+DERIVE(SPDX.LicenseId)
+DERIVE(SPDX.LicenseRef)
+DERIVE(SPDX.LicenseExceptionId)
+DERIVE(Mixin)
+DERIVE(ModuleReexport)
+DERIVE(ModuleRenaming)
 DERIVE(OS)
 DERIVE(PackageDescription)
 DERIVE(PackageIdentifier)
@@ -86,32 +110,12 @@ DERIVE(RepoType)
 DERIVE(SetupBuildInfo)
 DERIVE(ShortText)
 DERIVE(SourceRepo)
+DERIVE(TestSuite)
+DERIVE(TestSuiteInterface)
+DERIVE(TestType)
 DERIVE(UnqualComponentName)
 DERIVE(Version)
 DERIVE(VersionRange)
-
-DERIVEN(Benchmark)
-DERIVEN(BenchmarkInterface)
-DERIVEN(BenchmarkType)
-DERIVEN(BuildInfo)
-DERIVEN(CompilerFlavor)
-DERIVEN(Executable)
-DERIVEN(ExecutableScope)
-DERIVEN(Extension)
-DERIVEN(ForeignLib)
-DERIVEN(ForeignLibOption)
-DERIVEN(ForeignLibType)
-DERIVEN(IncludeRenaming)
-DERIVEN(KnownExtension)
-DERIVEN(Language)
-DERIVEN(LibVersionInfo)
-DERIVEN(Library)
-DERIVEN(Mixin)
-DERIVEN(ModuleReexport)
-DERIVEN(ModuleRenaming)
-DERIVEN(TestSuite)
-DERIVEN(TestSuiteInterface)
-DERIVEN(TestType)
 
 deriveGeneric ''CondTree
 

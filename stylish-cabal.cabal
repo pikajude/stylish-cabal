@@ -6,12 +6,13 @@ license:            BSD3
 license-file:       LICENSE
 author:             Jude Taylor
 maintainer:         me@jude.xyz
-tested-with:        GHC == 7.6.3, GHC == 7.8.4, GHC == 7.10.3, GHC == 8.0.2, GHC == 8.2.2
+tested-with:        GHC == 8.4.1
 category:           Language
 build-type:         Simple
 extra-source-files: ChangeLog.md
-                    tests/example.cabal
-cabal-version:      >= 1.10
+                    tests/cabal-files/example
+                    tests/cabal-files/hpc-coveralls
+cabal-version:      2.0
 
 source-repository head
   type:     git
@@ -45,7 +46,7 @@ library
                       Types.Field
   hs-source-dirs:     src
   build-depends:      base                 == 4.*
-                    , Cabal                == 2.0.*
+                    , Cabal                == 2.1.0.0
                     , ansi-wl-pprint
                     , base-compat
                     , data-default
@@ -61,11 +62,29 @@ library
   if flag(werror)
     ghc-options: -Werror
 
+library test-utils
+  exposed-modules:  Expectations
+                    SortedPackageDescription
+  other-modules:    MultiSet
+                    SortedPackageDescription.TH
+  hs-source-dirs:   tests/utils
+  build-depends:    base
+                  , Cabal
+                  , base-compat
+                  , containers
+                  , hspec
+                  , hspec-core
+                  , stylish-cabal
+                  , template-haskell
+                  , utf8-string
+  default-language: Haskell2010
+
 executable stylish-cabal
   main-is:            Main.hs
   build-depends:      base
                     , ansi-wl-pprint
                     , base-compat
+                    , bytestring
                     , optparse-applicative
                     , stylish-cabal
   default-language:   Haskell2010
@@ -105,18 +124,21 @@ test-suite strictness
 test-suite roundtrip
   type:               exitcode-stdio-1.0
   main-is:            Main.hs
-  other-modules:      SortedDesc
-                      Utils
   hs-source-dirs:     tests/roundtrip
   build-depends:      base
                     , Cabal
                     , ansi-wl-pprint
                     , base-compat
+                    , bytestring
                     , containers
                     , hspec
                     , hspec-core
                     , hspec-expectations-pretty-diff
+                    , pretty-show
                     , stylish-cabal
+                    , template-haskell
+                    , test-utils
+                    , utf8-string
   default-language:   Haskell2010
   default-extensions: NoImplicitPrelude
   ghc-options:        -Wall -fno-warn-missing-signatures
@@ -127,14 +149,13 @@ test-suite roundtrip
 test-suite roundtrip-hackage
   type:               exitcode-stdio-1.0
   main-is:            Hackage.hs
-  other-modules:      SortedDesc
-                      Utils
   hs-source-dirs:     tests/roundtrip
   build-depends:      base
                     , Cabal
                     , aeson
                     , ansi-wl-pprint
                     , base-compat
+                    , bytestring
                     , containers
                     , hspec
                     , hspec-core
@@ -142,6 +163,7 @@ test-suite roundtrip-hackage
                     , lens
                     , mwc-random
                     , stylish-cabal
+                    , test-utils
                     , utf8-string
                     , vector
                     , wreq

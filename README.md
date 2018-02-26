@@ -1,10 +1,10 @@
-# stylish-cabal [![stylish-cabal](https://img.shields.io/hackage/v/stylish-cabal.svg)](https://hackage.haskell.org/package/stylish-cabal) [![stylish-cabal](https://travis-ci.org/pikajude/stylish-cabal.svg)](https://travis-ci.org/pikajude/stylish-cabal)
+# stylish-cabal [![stylish-cabal](https://img.shields.io/hackage/v/stylish-cabal.svg)](https://hackage.haskell.org/package/stylish-cabal) [![stylish-cabal](https://travis-ci.org/pikajude/stylish-cabal.svg?branch=ghc-8.4)](https://travis-ci.org/pikajude/stylish-cabal)
 
 Automatic formatting for Cabal files.
 
 ## Examples
 
-[example.cabal](tests/example.cabal) and [example-out.cabal](tests/example-out.cabal)
+[example.cabal](tests/cabal-files/example) and [example-out.cabal](tests/cabal-files/example-out)
 demonstrate what `stylish-cabal` does.
 
 ## Usage

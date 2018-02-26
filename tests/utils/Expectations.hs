@@ -1,34 +1,35 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# Language StandaloneDeriving #-}
 
-module Utils where
+module Expectations where
 
+import qualified Data.ByteString.UTF8 as U
 import Data.List.Compat
-import Distribution.PackageDescription.Parse
+import Distribution.PackageDescription.Parsec
 import Prelude.Compat
-import SortedDesc
+import SortedPackageDescription
 import StylishCabal as S
+import Test.Hspec
 import Test.Hspec.Core.Spec
-import Test.Hspec.Expectations.Pretty
+import Test.Hspec.Core.Runner
 
-deriving instance Eq a => Eq (ParseResult a)
+hspecColor = hspecWith (defaultConfig {configColorMode = ColorAlways})
 
 expectParse cabalStr = do
     let doc =
-            (`displayS` "") . render 80 . plain . pretty <$>
+            U.fromString . (`displayS` "") . render 80 . plain . pretty <$>
             S.parsePackageDescription cabalStr
     case doc of
         S.Success rendered -> do
-            let original =
-                    from <$> parse' cabalStr :: ParseResult SGenericPackageDescription
-                new = from <$> parse' rendered
+            let ([], Right original) = fmap sortGenericPackageDescription <$> parse' cabalStr
+                ([], Right new) = fmap sortGenericPackageDescription <$> parse' rendered
             shouldBe original new
         Warn {} ->
             expectationFailure
                 "SKIP Warnings generated from original file, cannot guarantee consistency of output"
         S.Error {} -> expectationFailure "SKIP Original cabal file does not parse"
   where
-    parse' = parseGenericPackageDescription
+    parse' = runParseResult . parseGenericPackageDescription
 
 applySkips i =
     i

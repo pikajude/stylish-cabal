@@ -24,6 +24,7 @@ module Types.Field
     , longList
     , testedField
     , licenseField
+    , spdxLicenseField
     , dependencies
     , nonEmpty
     , stringField
@@ -33,6 +34,7 @@ module Types.Field
 import Distribution.Compiler
 import Distribution.License
 import Distribution.ModuleName
+import qualified Distribution.SPDX as SPDX
 import Distribution.Types.Dependency
 import Distribution.Types.ExeDependency
 import Distribution.Types.ForeignLibOption
@@ -48,8 +50,9 @@ import Prelude.Compat
 data FieldVal
     = Dependencies [Dependency]
     | Version Version
-    | CabalVersion Version
+    | CabalVersion (Either Version VersionRange)
     | License License
+    | SPDXLicense SPDX.LicenseExpression
     | Str String
     | File String
     | Spaces [String]
@@ -92,6 +95,9 @@ dependencies n as = Just $ Field n (Dependencies as)
 
 licenseField n a = Just $ Field n (License a)
 
+spdxLicenseField _ SPDX.NONE = Nothing
+spdxLicenseField n (SPDX.License a) = Just $ Field n (SPDXLicense a)
+
 file n a = Just $ Field n (File a)
 
 spaces n as = Just $ Field n (Spaces as)
@@ -104,6 +110,7 @@ extensions n as = Just $ Field n (Extensions as)
 
 version n a = Just $ Field n (Version a)
 
+cabalVersion _ (Right vr) | vr == anyVersion = Nothing
 cabalVersion n a = Just $ Field n (CabalVersion a)
 
 modules n as = Just $ Field n (Modules as)

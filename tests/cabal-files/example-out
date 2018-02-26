@@ -1,3 +1,4 @@
+-- vi: ft=cabal
 name:               example-package
 version:            1.2.3.4
 synopsis:           A short synopsis for this package
