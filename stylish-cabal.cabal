@@ -61,6 +61,23 @@ library
   if flag(werror)
     ghc-options: -Werror
 
+library test-utils
+  exposed-modules:  Expectations
+                    SortedPackageDescription
+  other-modules:    MultiSet
+                    SortedPackageDescription.TH
+  hs-source-dirs:   tests/utils
+  build-depends:    base
+                  , Cabal
+                  , base-compat
+                  , containers
+                  , hspec
+                  , hspec-core
+                  , stylish-cabal
+                  , template-haskell
+                  , utf8-string
+  default-language: Haskell2010
+
 executable stylish-cabal
   main-is:            Main.hs
   build-depends:      base
@@ -105,8 +122,6 @@ test-suite strictness
 test-suite roundtrip
   type:               exitcode-stdio-1.0
   main-is:            Main.hs
-  other-modules:      SortedDesc
-                      Utils
   hs-source-dirs:     tests/roundtrip
   build-depends:      base
                     , Cabal
@@ -117,6 +132,7 @@ test-suite roundtrip
                     , hspec-core
                     , hspec-expectations-pretty-diff
                     , stylish-cabal
+                    , test-utils
   default-language:   Haskell2010
   default-extensions: NoImplicitPrelude
   ghc-options:        -Wall -fno-warn-missing-signatures
@@ -127,8 +143,6 @@ test-suite roundtrip
 test-suite roundtrip-hackage
   type:               exitcode-stdio-1.0
   main-is:            Hackage.hs
-  other-modules:      SortedDesc
-                      Utils
   hs-source-dirs:     tests/roundtrip
   build-depends:      base
                     , Cabal
@@ -142,6 +156,7 @@ test-suite roundtrip-hackage
                     , lens
                     , mwc-random
                     , stylish-cabal
+                    , test-utils
                     , utf8-string
                     , vector
                     , wreq

@@ -69,10 +69,12 @@ parsePackageDescription input =
 -- 'displayError'. The given 'FilePath' is used only for error messages and
 -- is not read from.
 readPackageDescription fpath =
-    result (displayError fpath) printWarnings return . parsePackageDescription
+    result (displayError fpath) (printWarnings fpath) return . parsePackageDescription
 
 -- | Print some warnings to 'stderr' and exit.
-printWarnings ps = mapM_ (warn normal . showPWarning "<input>") ps >> exitFailure
+printWarnings :: Maybe FilePath -> [PWarning] -> IO a
+printWarnings fpath ps =
+    mapM_ (warn normal . showPWarning (fromMaybe "<input>" fpath)) ps >> exitFailure
 
 -- | Print a parse error to 'stderr', annotated with filepath and line
 -- number (if available), then exit.

@@ -6,35 +6,31 @@ module Render.Lib
     ( P(..)
     , renderBlockHead
     , showVersionRange
-    , showExtension
+    , prettyShow
     , moduleDoc
     , rexpModuleDoc
-    , showFlibType
-    , showFlibOpt
     , filepath
     , renderTestedWith
-    , showLicense
     , exeDependencyAsDependency
     ) where
 
 import Data.Char
 import Data.List.Compat
 import Distribution.Compiler
-import Distribution.License
 import Distribution.ModuleName
 import Distribution.PackageDescription
+import Distribution.Text
 import Distribution.Types.ExeDependency
-import Distribution.Types.ForeignLibOption
-import Distribution.Types.ForeignLibType
 import Distribution.Types.PackageName
 import Distribution.Types.UnqualComponentName
 import Distribution.Version
-import Language.Haskell.Extension
 import Prelude.Compat
 import Text.PrettyPrint.ANSI.Leijen hiding ((<$>))
 
 import Render.Options
 import Types.Block
+
+prettyShow = show . disp
 
 newtype P = P
     { unP :: String
@@ -46,37 +42,12 @@ instance Ord P where
     compare _ (P "base") = GT
     compare (P p1) (P p2) = compare p1 p2
 
-showFlibType ForeignLibNativeShared = "native-shared"
-showFlibType f = error $ show f
-
-showFlibOpt ForeignLibStandalone = "standalone"
-
-showLicense :: License -> String
-showLicense MIT = "MIT"
-showLicense BSD2 = "BSD2"
-showLicense BSD3 = "BSD3"
-showLicense BSD4 = "BSD4"
-showLicense PublicDomain = "PublicDomain"
-showLicense ISC = "ISC"
-showLicense (MPL v) = showL "MPL" (Just v)
-showLicense (LGPL v) = showL "LGPL" v
-showLicense (GPL v) = showL "GPL" v
-showLicense (AGPL v) = showL "AGPL" v
-showLicense (Apache v) = showL "Apache" v
-showLicense OtherLicense = "OtherLicense"
-showLicense x = error $ show x
-
-showL :: String -> Maybe Version -> String
-showL s Nothing = s
-showL s (Just v) = s ++ "-" ++ showVersion v
-
 renderTestedWith ts = do
-    tests <- mapM (\(compiler, vers) -> showVersioned (showCompiler compiler, vers)) ts
-    return $ fillSep . punctuate comma $ tests
+    fillSep . punctuate comma <$>
+        mapM (\(compiler, vers) -> showVersioned (showCompiler compiler, vers)) ts
   where
     showCompiler (OtherCompiler x) = x
-    showCompiler HaskellSuite {} =
-        error "Not sure what to do with HaskellSuite value in tested-with field"
+    showCompiler (HaskellSuite x) = x
     showCompiler x = show x
 
 showVersioned :: (String, VersionRange) -> Render Doc
@@ -117,10 +88,6 @@ rexpModuleDoc (ModuleReexport pkg origname name) =
     (if origname == name
          then moduleDoc origname
          else moduleDoc origname <+> "as" <+> moduleDoc name)
-
-showExtension (EnableExtension s) = show s
-showExtension (DisableExtension s) = "No" ++ show s
-showExtension x = error $ show x
 
 exeDependencyAsDependency (ExeDependency pkg comp vers) =
     (P $ unPackageName pkg ++ ":" ++ unUnqualComponentName comp, vers)

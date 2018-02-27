@@ -9,11 +9,9 @@ import Control.Arrow
 import Control.DeepSeq
 import Control.Monad
 import Data.Char
-import Data.Either
 import Data.Maybe
 import Distribution.License
 import Distribution.PackageDescription
-import Distribution.Simple.BuildToolDepends
 import Distribution.Types.CondTree
 import Distribution.Types.ExecutableScope
 import Distribution.Types.ForeignLib
@@ -65,7 +63,7 @@ sourceRepoToBlock SourceRepo {..} =
     showType x = map toLower $ show x
 
 pdToFields pd@PackageDescription {..} =
-    [ guard newSpec >> cabalVersion "cabal-version" packageVersion
+    [ guard newSpec >> cabalVersion "cabal-version" specVersionRaw
     , stringField "name" (unPackageName $ pkgName package)
     , version "version" (pkgVersion package)
     , nonEmpty (stringField "synopsis") synopsis
@@ -87,7 +85,7 @@ pdToFields pd@PackageDescription {..} =
     , nonEmpty (longList "extra-doc-files") extraDocFiles
     , nonEmpty (longList "data-files") dataFiles
     , nonEmpty (stringField "data-dir") dataDir
-    , guard (not newSpec) >> cabalVersion "cabal-version" (specVersion pd)
+    , guard (not newSpec) >> cabalVersion "cabal-version" specVersionRaw
     ] ++
     map (uncurry stringField) customFieldsPD
   where
@@ -114,7 +112,7 @@ libToBlock pkg libname CondNode {..} =
         (nodesToBlocks pkg libBuildInfo libDataToFields condTreeComponents)
 
 libDataToFields Library {..} =
-    libName `seq`
+    libName `deepseq`
     [ ffilter not (stringField "exposed" . show) libExposed
     , nonEmpty (modules "exposed-modules") exposedModules
     , nonEmpty (rexpModules "reexported-modules") reexportedModules
@@ -122,7 +120,7 @@ libDataToFields Library {..} =
     ]
 
 foreignLibToBlock pkg libname CondNode {..} =
-    deepseq condTreeConstraints $
+    condTreeConstraints `deepseq`
     Block
         (ForeignLib_ $ unUnqualComponentName libname)
         (foreignLibDataToFields condTreeData ++
@@ -207,7 +205,7 @@ condNodeToBlock pkg getBuildInfo extra (CondBranch pred' branch1 branch2) =
                     (nodesToBlocks pkg getBuildInfo extra (condTreeComponents b))
      in b1 : maybeToList b2
 
-buildInfoToFields pkg BuildInfo {..} =
+buildInfoToFields _ BuildInfo {..} =
     [ nonEmpty (commas "other-languages" . map show) otherLanguages
     , nonEmpty (modules "other-modules") otherModules
     , nonEmpty (mixins_ "mixins") mixins
@@ -241,14 +239,6 @@ buildInfoToFields pkg BuildInfo {..} =
     map (optionToField "-shared") sharedOptions ++
     map (uncurry stringField) customFieldsBI
   where
-    (oldTools, newTools) =
-        partitionEithers $
-        map Right buildToolDepends ++
-        map
-            (\dep ->
-                 case desugarBuildTool pkg dep of
-                     Just k -> Right k
-                     Nothing -> Left dep)
-            buildTools
+    (oldTools, newTools) = (buildTools, buildToolDepends)
 
 optionToField pref (f, args) = spaces (map toLower (show f) ++ pref ++ "-options") args

@@ -52,7 +52,7 @@ opts =
 
 output :: Opts -> Doc -> Handle -> IO ()
 output o doc h = do
-    isTerminal <- hIsTerminalDevice stdout
+    isTerminal <- hIsTerminalDevice h
     if color o && isTerminal
         then displayIO h (f doc)
         else do

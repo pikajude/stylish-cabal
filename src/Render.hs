@@ -22,6 +22,7 @@ import Distribution.Types.PkgconfigDependency
 import Distribution.Types.PkgconfigName
 import Distribution.Version
 import Prelude.Compat hiding ((<$>))
+import qualified Prelude.Compat as P
 import Text.PrettyPrint.ANSI.Leijen
 
 import Render.Lib
@@ -30,6 +31,11 @@ import Types.Block
 import Types.Field
 
 deriving instance Ord ModuleReexport
+
+data Paragraph
+    = Words String
+    | Code [String]
+    deriving (Show)
 
 fieldValueToDoc k (Field _ f) =
     case f of
@@ -49,24 +55,28 @@ fieldValueToDoc k (Field _ f) =
   where
     val' (Str x) = pure $ string x
     val' (File x) = pure $ filepath x
-    val' (Version v) = pure $ string $ showVersion v
-    val' (CabalVersion v)
-        -- up until Cabal 1.10, we have to specify '>=' with cabal-version
-        | withinRange v (orEarlierVersion (mkVersion [1, 10])) =
-            showVersionRange $ orLaterVersion v
-        | otherwise = pure $ string $ showVersion v
-    val' (License l) = pure $ string $ showLicense l
+    val' (Version v) = pure $ string $ prettyShow v
+    val' (CabalVersion (Left v)) = pure $ string $ prettyShow v
+    val' (CabalVersion (Right v))
+        | v == anyVersion = showVersionRange (orLaterVersion (mkVersion [1, 10]))
+        | otherwise = showVersionRange v
+    val' (License l) = pure $ string $ prettyShow l
     val' (TestedWith ts) = renderTestedWith ts
     val' (LongList fs) = pure $ vcat $ map filepath fs
     val' (Commas fs) = pure $ fillSep $ punctuate comma $ map filepath fs
     val' (Spaces ls) = pure $ fillSep $ map filepath ls
     val' (Modules ms) = pure $ vcat $ map moduleDoc $ sort ms
     val' (Module m) = pure $ moduleDoc m
-    val' (Extensions es) = val' (LongList $ map showExtension es)
-    val' (FlibType ty) = pure $ string $ showFlibType ty
-    val' (FlibOptions fs) = val' $ Spaces $ map showFlibOpt fs
+    val' (Extensions es) = val' (LongList $ map prettyShow es)
+    val' (FlibType ty) = pure $ string $ prettyShow ty
+    val' (FlibOptions fs) = val' $ Spaces $ map prettyShow fs
     val' x = error $ show x
 fieldValueToDoc k (Description s) = descriptionToDoc k s
+
+parseParagraphs s = map blockToPara $ splitOn "\n\n" s
+  where
+    blockToPara c@('>':_) = Code $ lines c
+    blockToPara x = Words x
 
 descriptionToDoc k s = do
     n <- asks indentSize
@@ -74,7 +84,7 @@ descriptionToDoc k s = do
         (<>) colon $
         nest n $
         case paragraphs of
-            [p]
+            [Words p]
                 -- i still don't know what this does
              ->
                 group $
@@ -83,8 +93,10 @@ descriptionToDoc k s = do
                     (indent (k + 1) (string p))
             xs -> line <> vcat (intersperse (green dot) (map paragraph xs))
   where
-    paragraphs = map (unwords . lines) $ splitOn "\n\n" s
-    paragraph t = fillSep (map text $ words t)
+    paragraphs = parseParagraphs s
+    paragraph (Words t) = fillSep (map text $ words t)
+    -- preserve formatting for code blocks
+    paragraph (Code ss) = vcat (map string ss)
 
 mixinsToDoc k bs
     | k == 0 = pure $ deps ": "
@@ -146,7 +158,7 @@ buildDepsToDoc k bs
 
 fieldsToDoc :: [Field] -> Render Doc
 fieldsToDoc fs =
-    fmap vcat $
+    vcat P.<$>
     mapM
         (\field ->
              widthR (dullblue $ string (fieldName field)) $ \fn ->

@@ -48,7 +48,7 @@ import Prelude.Compat
 data FieldVal
     = Dependencies [Dependency]
     | Version Version
-    | CabalVersion Version
+    | CabalVersion (Either Version VersionRange)
     | License License
     | Str String
     | File String
@@ -104,6 +104,7 @@ extensions n as = Just $ Field n (Extensions as)
 
 version n a = Just $ Field n (Version a)
 
+cabalVersion _ (Right x) | x == anyVersion = Nothing
 cabalVersion n a = Just $ Field n (CabalVersion a)
 
 modules n as = Just $ Field n (Modules as)

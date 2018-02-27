@@ -6,15 +6,16 @@ import Control.Lens
 import Control.Monad
 import Data.Aeson
 import Data.ByteString.Lazy.UTF8 (toString)
+import qualified Data.Vector as V
+import Expectations
 import GHC.Generics
 import Network.Wreq
+import Prelude.Compat
+import System.IO
 import System.Random.MWC
 import System.Random.MWC.Distributions
-import System.IO
 import Test.Hspec
-import qualified Data.Vector as V
 import Test.Hspec.Core.Spec
-import Utils
 
 newtype GetPackage = GetPackage
     { packageName :: String
@@ -60,4 +61,4 @@ testHackage = do
                 expectParse $ toString $ view responseBody cabalFile
 
 main :: IO ()
-main = hspec $ describe "comprehensive check" testHackage
+main = hspecColor $ describe "comprehensive check" testHackage

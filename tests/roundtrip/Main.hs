@@ -2,12 +2,14 @@
 
 module Main where
 
-import Test.Hspec
-import Utils
+import Expectations
 import Prelude.Compat
+import Test.Hspec
 
 main :: IO ()
 main =
-    hspec $
-    describe "comprehensive check" $
-    it "retains every attribute" $ expectParse =<< readFile "tests/example.cabal"
+    hspecColor $
+    describe "comprehensive check" $ do
+        it "retains every attribute" $
+            expectParse =<< readFile "tests/cabal-files/example"
+        it "codeblocks" $ expectParse =<< readFile "tests/cabal-files/hpc-coveralls"

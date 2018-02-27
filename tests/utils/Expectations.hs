@@ -1,17 +1,20 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# Language StandaloneDeriving #-}
 
-module Utils where
+module Expectations where
 
 import Data.List.Compat
 import Distribution.PackageDescription.Parse
 import Prelude.Compat
-import SortedDesc
+import SortedPackageDescription
 import StylishCabal as S
+import Test.Hspec
+import Test.Hspec.Core.Runner
 import Test.Hspec.Core.Spec
-import Test.Hspec.Expectations.Pretty
 
 deriving instance Eq a => Eq (ParseResult a)
+
+hspecColor = hspecWith (defaultConfig {configColorMode = ColorAlways})
 
 expectParse cabalStr = do
     let doc =
@@ -19,9 +22,8 @@ expectParse cabalStr = do
             S.parsePackageDescription cabalStr
     case doc of
         S.Success rendered -> do
-            let original =
-                    from <$> parse' cabalStr :: ParseResult SGenericPackageDescription
-                new = from <$> parse' rendered
+            let ParseOk _ original = sortGenericPackageDescription <$> parse' cabalStr
+                ParseOk _ new = sortGenericPackageDescription <$> parse' rendered
             shouldBe original new
         Warn {} ->
             expectationFailure

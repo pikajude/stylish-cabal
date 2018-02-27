@@ -41,7 +41,8 @@ main :: IO ()
 main =
     hspec $ do
         ParseOk _ gpd <-
-            runIO $ parseGenericPackageDescription <$> readFile "tests/example.cabal"
+            runIO $
+            parseGenericPackageDescription <$> readFile "tests/cabal-files/example"
         describe "pretty" $
             it "should fully evaluate the package description" $ do
                 let expected = nf gpd

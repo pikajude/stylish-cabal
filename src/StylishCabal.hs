@@ -1,5 +1,3 @@
-{-# Language ImplicitParams #-}
-
 -- | Cabal file formatter.
 module StylishCabal
     ( -- * Formatting Cabal files
