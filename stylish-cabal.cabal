@@ -10,8 +10,9 @@ tested-with:        GHC == 7.6.3, GHC == 7.8.4, GHC == 7.10.3, GHC == 8.0.2, GHC
 category:           Language
 build-type:         Simple
 extra-source-files: ChangeLog.md
-                    tests/example.cabal
-cabal-version:      >= 1.10
+                    tests/cabal-files/example
+                    tests/cabal-files/hpc-coveralls
+cabal-version:      2.0
 
 source-repository head
   type:     git
