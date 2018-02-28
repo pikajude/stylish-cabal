@@ -11,9 +11,9 @@ main =
     hspecColor $
     describe "comprehensive check" $ do
         it "retains every attribute" $
-            expectParse =<< readFile "tests/cabal-files/example"
-        it "codeblocks" $ expectParse =<< readFile "tests/cabal-files/hpc-coveralls"
+            expectParse =<< readFile "tests/cabal-files/example.txt"
+        it "codeblocks" $ expectParse =<< readFile "tests/cabal-files/hpc-coveralls.txt"
         it "non-ghc compilers" $
-            expectParse =<< readFile "tests/cabal-files/exposed-containers"
+            expectParse =<< readFile "tests/cabal-files/exposed-containers.txt"
         it "baffling version constraints" $
-            expectParse =<< readFile "tests/cabal-files/deka-tests"
+            expectParse =<< readFile "tests/cabal-files/deka-tests.txt"
