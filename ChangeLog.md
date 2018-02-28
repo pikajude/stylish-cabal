@@ -12,7 +12,7 @@
   the CLI tool (like hindent, hlint, and so on).
 * Better readme
 
-## 0.3.0.0 -- 2018-02-27
+## 0.2.1.0 -- 2018-02-27
 
 * Removed support for GHC 8.4. Using a Cabal version older than the built-in version is
   officially not recommended.
