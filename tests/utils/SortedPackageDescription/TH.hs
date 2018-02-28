@@ -42,6 +42,7 @@ appsT [] = error "appsT []"
 appsT [x] = x
 appsT (x:y:zs) = appsT (appT x y : zs)
 
+prim :: [Name] -> DecsQ
 prim ns =
     fmap concat $
     forM ns $ \n ->
@@ -49,7 +50,11 @@ prim ns =
             [ instanceD
                   (cxt [])
                   [t|Sortable $(conT n)|]
+#if MIN_VERSION_template_haskell(2,9,0)
                   [ tySynInstD ''MkSortable (tySynEqn [conT n] (conT n))
+#else
+                  [ tySynInstD ''MkSortable [conT n] (conT n)
+#endif
                   , funD 'sortable [clause [] (normalB [|id|]) []]
                   ]
             ]
@@ -68,8 +73,10 @@ commonDerivClause = cxt [[t|Show|], [t|Ord|], [t|Eq|]]
 commonDerivClause = [''Show, ''Ord, ''Eq]
 #endif
 
+deriveSortable :: [Name] -> DecsQ
 deriveSortable = deriveSortable_ ""
 
+deriveSortable_ :: String -> [Name] -> DecsQ
 deriveSortable_ prefix ns =
     fmap concat $
     forM ns $ \n -> do
@@ -81,7 +88,11 @@ deriveSortable_ prefix ns =
             , instanceD
                   (cxt [])
                   [t|Sortable $(tyhead)|]
+#if MIN_VERSION_template_haskell(2,9,0)
                   [ tySynInstD ''MkSortable (tySynEqn [tyhead] (conT dty))
+#else
+                  [ tySynInstD ''MkSortable [tyhead] (conT dty)
+#endif
                   , funD 'sortable (mkSortableImpl prefix x)
                   ]
             ]
