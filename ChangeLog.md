@@ -11,3 +11,13 @@
 * Better haddocks for StylishCabal module so it can be imported and used independently of
   the CLI tool (like hindent, hlint, and so on).
 * Better readme
+
+## 0.3.0.0 -- 2018-02-27
+
+* Removed support for GHC 8.4. Using a Cabal version older than the built-in version is
+  officially not recommended.
+* Certain version range expressions no longer incorrectly collapsed to ">="
+* `stylish-cabal` executable now checks the correct Handle when determining if it should colorize (previously always checked stdout)
+* Code block formatting in descriptions is now preserved (and will not be soft-broken to fit the width limit.)
+* haskell-suite in the "tested-with" field can now be rendered
+* Roundtrip test now checks an entire `GenericPackageDescription`, rather than just the `packageDescription` field
