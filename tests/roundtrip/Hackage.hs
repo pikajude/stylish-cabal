@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -fno-warn-unused-top-binds #-}
+{-# OPTIONS_GHC -fno-warn-unused-binds #-}
 {-# Language OverloadedStrings #-}
 {-# Language DeriveGeneric #-}
 

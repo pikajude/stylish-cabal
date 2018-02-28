@@ -13,3 +13,7 @@ main =
         it "retains every attribute" $
             expectParse =<< readFile "tests/cabal-files/example"
         it "codeblocks" $ expectParse =<< readFile "tests/cabal-files/hpc-coveralls"
+        it "non-ghc compilers" $
+            expectParse =<< readFile "tests/cabal-files/exposed-containers"
+        it "baffling version constraints" $
+            expectParse =<< readFile "tests/cabal-files/deka-tests"

@@ -8,7 +8,7 @@ let
 
   drv = with pkgs.haskell.lib; overrideCabal (
     (haskellPackages.callCabal2nix "stylish-cabal" ./. {})
-      .overrideScope (self: super: { Cabal = null; }))
+      .overrideScope (self: super: { Cabal = self.Cabal_2_0_1_1; }))
     (drv: pkgs.lib.optionalAttrs test {
       pname = drv.pname + "-${compiler}";
       configureFlags = [ "-ftest-strictness" "-fwerror" ];

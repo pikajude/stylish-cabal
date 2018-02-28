@@ -1,9 +1,8 @@
-{-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# OPTIONS_GHC -fno-warn-orphans -fno-warn-unused-binds #-}
 {-# Language UndecidableInstances #-}
 {-# Language NamedFieldPuns #-}
 {-# Language FlexibleContexts #-}
 {-# Language TemplateHaskell #-}
-{-# Language TypeApplications #-}
 {-# Language RecordWildCards #-}
 {-# Language StandaloneDeriving #-}
 {-# Language TypeFamilies #-}
@@ -42,7 +41,7 @@ import Language.Haskell.Extension
 import Prelude.Compat
 import SortedPackageDescription.TH
 
-sortGenericPackageDescription = sortable @GenericPackageDescription . squashDescription
+sortGenericPackageDescription = sortable . squashDescription
   where
     squashDescription g@GenericPackageDescription {..} =
         g
