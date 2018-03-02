@@ -1,6 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-deprecations #-}
 {-# Language FlexibleContexts #-}
-{-# Language RecordWildCards #-}
 {-# Language OverloadedStrings #-}
 
 module Render.Lib

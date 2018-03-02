@@ -50,9 +50,9 @@ renderDescription =
     -- across line boundaries
     go :: DocH () Identifier -> Reader DocContext Doc
     go DocEmpty = pure empty
-    go (DocEmphasis d) = enclose (green "/") (green "/") <$> (flattenedBody $ go d)
-    go (DocMonospaced d) = enclose (green "@") (green "@") <$> (flattenedBody $ go d)
-    go (DocBold d) = enclose (green "__") (green "__") <$> (flattenedBody $ go d)
+    go (DocEmphasis d) = enclose (green "/") (green "/") <$> flattenedBody (go d)
+    go (DocMonospaced d) = enclose (green "@") (green "@") <$> flattenedBody (go d)
+    go (DocBold d) = enclose (green "__") (green "__") <$> flattenedBody (go d)
     go (DocHeader (Header l t)) =
         (green (strBody $ replicate l '=') <+>) <$> inBody (go t)
     go (DocAppend a b) = liftM2 (<>) (go a) (inBody $ go b)
@@ -76,7 +76,7 @@ renderDescription =
                 DocString s
                     | all (`notElem` ['{', '}']) s && not listContext ->
                         green ">" <+> arrowblock s
-                    | listContext && all (/= '\n') s ->
+                    | listContext && notElem '\n' s ->
                         cat [green "@", string s, green "@"]
                 y -> vcat [green "@", goplain y <> green "@"]
     go (DocString s) = do

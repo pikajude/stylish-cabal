@@ -1,7 +1,7 @@
 -- | Cabal file formatter.
 module StylishCabal
-      -- * Formatting Cabal files
-    ( pretty
+    ( -- * Formatting Cabal files
+      pretty
     , prettyOpts
     , RenderOptions(..)
     , render

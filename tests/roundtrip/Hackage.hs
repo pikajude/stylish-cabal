@@ -43,7 +43,7 @@ getJson x =
 -- rerun on *all* of hackage, but the normal testsuite shouldn't do that
 -- because it takes so long. set SKIP=0 to run on all packages
 testHackage = do
-    skip <- runIO $ (readMaybe =<<) <$> (lookupEnv "SKIP")
+    skip <- runIO $ (readMaybe =<<) <$> lookupEnv "SKIP"
     packages <-
         runIO $ do
             hSetBuffering stdout NoBuffering
