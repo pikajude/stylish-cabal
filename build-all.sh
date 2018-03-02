@@ -2,10 +2,14 @@
 
 set -e
 
-for compiler in ghc763 ghc784 ghc7103 ghc802 ghc822; do
-    if [ "$compiler" = "ghc784" -o "$compiler" = "ghc763" ]; then
-        test_hackage=
-    else
+if [ "$#" -eq "0" ]; then
+  compilers=(ghc742 ghc763 ghc784 ghc7103 ghc802 ghc822)
+else
+  compilers=($@)
+fi
+
+for compiler in ${compilers[@]}; do
+    if [ "x$TEST_HACKAGE" != "x" ]; then
         test_hackage="-ftest-hackage"
     fi
     echo "Testing $compiler"

@@ -1,7 +1,7 @@
 -- | Cabal file formatter.
 module StylishCabal
-    ( -- * Formatting Cabal files
-      pretty
+      -- * Formatting Cabal files
+    ( pretty
     , prettyOpts
     , RenderOptions(..)
     , render
@@ -15,6 +15,7 @@ module StylishCabal
     -- * Reexports
     , Default(..)
     , Doc
+    , renderDescription
     , plain
     , displayIO
     , displayS
@@ -23,6 +24,7 @@ module StylishCabal
 import Data.Default
 import Distribution.PackageDescription (GenericPackageDescription)
 import Prelude.Compat
+import Render.Lib.Haddock
 import Text.PrettyPrint.ANSI.Leijen hiding (pretty)
 
 import Parse

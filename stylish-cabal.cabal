@@ -39,23 +39,28 @@ library
   other-modules:      Parse
                       Render
                       Render.Lib
+                      Render.Lib.Haddock
                       Render.Options
                       Transform
                       Types.Block
                       Types.Field
   hs-source-dirs:     src
-  build-depends:      base           == 4.*
-                    , Cabal          == 2.0.*
+  build-depends:      base            == 4.*
+                    , Cabal           == 2.0.*
                     , ansi-wl-pprint
                     , base-compat
                     , data-default
                     , deepseq
+                    , haddock-library
                     , mtl
                     , split
   default-language:   Haskell2010
   default-extensions: NoMonomorphismRestriction
                       NoImplicitPrelude
   ghc-options:        -Wall -fno-warn-missing-signatures
+
+  if impl(ghc < 7.6)
+    build-depends: ghc-prim
 
   if flag(werror)
     ghc-options: -Werror
@@ -70,8 +75,13 @@ library test-utils
                     , Cabal
                     , base-compat
                     , containers
+                    , haddock-library
                     , hspec
                     , hspec-core
+                    , hspec-expectations-pretty-diff
+                    , microlens
+                    , microlens-th
+                    , split
                     , stylish-cabal
                     , template-haskell
   default-language:   Haskell2010

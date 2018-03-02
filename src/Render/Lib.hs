@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-deprecations #-}
-{-# Language LambdaCase #-}
 {-# Language FlexibleContexts #-}
+{-# Language RecordWildCards #-}
 {-# Language OverloadedStrings #-}
 
 module Render.Lib
@@ -13,6 +13,7 @@ module Render.Lib
     , filepath
     , renderTestedWith
     , exeDependencyAsDependency
+    , renderDescription
     ) where
 
 import Data.Char
@@ -28,6 +29,7 @@ import Distribution.Version hiding (foldVersionRange)
 import Prelude.Compat
 import Text.PrettyPrint.ANSI.Leijen hiding ((<$>))
 
+import Render.Lib.Haddock (renderDescription)
 import Render.Options
 import Types.Block
 
@@ -37,11 +39,11 @@ wildcardUpperBound =
     alterVersion $ \lowerBound -> init lowerBound ++ [last lowerBound + 1]
 
 majorUpperBound :: Version -> Version
-majorUpperBound =
-    alterVersion $ \case
-        [] -> [0, 1]
-        [m1] -> [m1, 1]
-        (m1:m2:_) -> [m1, m2 + 1]
+majorUpperBound = alterVersion go
+  where
+    go [] = [0, 1]
+    go [m1] = [m1, 1]
+    go (m1:m2:_) = [m1, m2 + 1]
 
 newtype P = P
     { unP :: String

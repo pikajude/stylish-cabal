@@ -42,6 +42,8 @@ import Distribution.Types.Mixin
 import Distribution.Types.ModuleReexport
 import Distribution.Types.PkgconfigDependency
 import Distribution.Version
+import Documentation.Haddock.Parser
+import Documentation.Haddock.Types (_doc, DocH)
 import Language.Haskell.Extension
 import Prelude.Compat
 
@@ -69,7 +71,7 @@ data FieldVal
     deriving (Show)
 
 data Field
-    = Description String
+    = Description (DocH () Identifier)
     | Field String
             FieldVal
     deriving (Show)
@@ -104,7 +106,8 @@ extensions n as = Just $ Field n (Extensions as)
 
 version n a = Just $ Field n (Version a)
 
-cabalVersion _ (Right x) | x == anyVersion = Nothing
+cabalVersion _ (Right x)
+    | x == anyVersion = Nothing
 cabalVersion n a = Just $ Field n (CabalVersion a)
 
 modules n as = Just $ Field n (Modules as)
@@ -123,7 +126,7 @@ fieldName (Field s _) = s
 fieldName (Description _) = "description"
 
 desc [] = Nothing
-desc vs = Just (Description vs)
+desc vs = Just (Description $ _doc $ parseParas vs)
 
 buildDeps [] = Nothing
 buildDeps vs = dependencies "build-depends" vs

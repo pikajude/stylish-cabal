@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# Language CPP #-}
 {-# Language StandaloneDeriving #-}
 {-# Language DeriveGeneric #-}
 {-# Language DeriveDataTypeable #-}
@@ -26,6 +27,10 @@ import System.Environment
 import System.Exit
 import System.IO
 
+#if MIN_VERSION_base(4,9,0)
+import Data.Functor.Classes
+#endif
+
 -- | Like Cabal's @ParseResult@, but treats warnings as a separate failure
 -- case.
 data Result a
@@ -33,7 +38,24 @@ data Result a
             String -- ^ Parse error on the given line.
     | Warn [PWarning] -- ^ Warnings emitted during parse.
     | Success a -- ^ The input is a compliant package description.
-    deriving (Show, Eq, Functor, Generic, Generic1, Typeable, Data)
+    deriving (Show, Eq, Functor, Generic, Typeable, Data)
+
+#if MIN_VERSION_base(4,6,0)
+deriving instance Generic1 Result
+#endif
+
+#if MIN_VERSION_base(4,9,0)
+instance Show1 Result where
+    liftShowsPrec sp _ p (Success n) = showsUnaryWith sp "Success" p n
+    liftShowsPrec _ _ p (Warn pws) = showsUnaryWith showsPrec "Warn" p pws
+    liftShowsPrec _ _ p (Error ml s) = showsBinaryWith showsPrec showsPrec "Error" p ml s
+
+instance Eq1 Result where
+    liftEq eq (Success a) (Success b) = eq a b
+    liftEq _ (Error ml s) (Error ml2 s2) = (ml,s) == (ml2,s2)
+    liftEq _ (Warn pws) (Warn pws2) = pws == pws2
+    liftEq _ _ _ = False
+#endif
 
 -- | Case analysis for 'Result'.
 result :: (Maybe LineNo -> String -> b) -> ([PWarning] -> b) -> (a -> b) -> Result a -> b

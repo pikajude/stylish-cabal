@@ -3,6 +3,7 @@
 
 module Expectations where
 
+import Control.Monad
 import Data.List.Compat
 import Distribution.PackageDescription.Parse
 import Prelude.Compat
@@ -11,20 +12,30 @@ import StylishCabal as S
 import Test.Hspec
 import Test.Hspec.Core.Runner
 import Test.Hspec.Core.Spec
+-- import Test.Hspec.Expectations.Pretty
 
 deriving instance Eq a => Eq (ParseResult a)
 
 hspecColor = hspecWith (defaultConfig {configColorMode = ColorAlways})
 
 expectParse cabalStr = do
-    let doc =
-            (`displayS` "") . render 80 . plain . pretty <$>
-            S.parsePackageDescription cabalStr
+    -- massive width limit is because:
+    --
+    -- edge case: a line ending in " ." will be word-wrapped to the next
+    -- line. unfortunately a "." on its own on a line means paragraph break
+    -- to the haddock parser. this case breaks tests on some hackage
+    -- packages, but is unlikely to be problematic in practice (because you
+    -- should just remove the leading space)
+    let proc = (`displayS` "") . render (maxBound `div` 10) . plain
+        doc = proc . pretty <$> S.parsePackageDescription cabalStr
     case doc of
         S.Success rendered -> do
-            let ParseOk _ original = sortGenericPackageDescription <$> parse' cabalStr
-                ParseOk _ new = sortGenericPackageDescription <$> parse' rendered
+            let ParseOk _ (descrs, original) =
+                    sortGenericPackageDescription <$> parse' cabalStr
+                ParseOk _ (descrs2, new) =
+                    sortGenericPackageDescription <$> parse' rendered
             shouldBe original new
+            forM_ (zip descrs descrs2) (uncurry shouldBe)
         Warn {} ->
             expectationFailure
                 "SKIP Warnings generated from original file, cannot guarantee consistency of output"
@@ -44,4 +55,4 @@ applySkips i =
                       x -> return x
         }
 
-mkHeader p = "parses " ++ p
+mkHeader n p = "parses #" ++ show n ++ ": " ++ p

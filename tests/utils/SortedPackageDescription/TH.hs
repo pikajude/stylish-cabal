@@ -8,6 +8,10 @@
 {-# Language DefaultSignatures #-}
 {-# Language TypeFamilies #-}
 
+#if !MIN_VERSION_base(4,6,0)
+{-# Language ConstraintKinds #-}
+#endif
+
 module SortedPackageDescription.TH where
 
 import Control.Monad.Compat

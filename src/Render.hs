@@ -8,7 +8,6 @@ module Render
     ) where
 
 import Data.List.Compat hiding (group)
-import Data.List.Split
 import Data.Maybe
 import Data.Ord
 import Distribution.Types.Dependency
@@ -31,11 +30,6 @@ import Types.Block
 import Types.Field
 
 deriving instance Ord ModuleReexport
-
-data Paragraph
-    = Words String
-    | Code [String]
-    deriving (Show)
 
 fieldValueToDoc k (Field _ f) =
     case f of
@@ -73,30 +67,11 @@ fieldValueToDoc k (Field _ f) =
     val' x = error $ show x
 fieldValueToDoc k (Description s) = descriptionToDoc k s
 
-parseParagraphs s = map blockToPara $ splitOn "\n\n" s
-  where
-    blockToPara c@('>':_) = Code $ lines c
-    blockToPara x = Words x
-
-descriptionToDoc k s = do
+descriptionToDoc k paras = do
     n <- asks indentSize
-    return $
-        (<>) colon $
-        nest n $
-        case paragraphs of
-            [Words p]
-                -- i still don't know what this does
-             ->
-                group $
-                flatAlt
-                    (linebreak <> fillSep (map text $ words p))
-                    (indent (k + 1) (string p))
-            xs -> line <> vcat (intersperse (green dot) (map paragraph xs))
+    return $ (<>) colon $ nest n $ flatAlt (linebreak <> ds) (indent (k + 1) ds)
   where
-    paragraphs = parseParagraphs s
-    paragraph (Words t) = fillSep (map text $ words t)
-    -- preserve formatting for code blocks
-    paragraph (Code ss) = vcat (map string ss)
+    ds = renderDescription paras
 
 mixinsToDoc k bs
     | k == 0 = pure $ deps ": "

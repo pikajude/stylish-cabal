@@ -21,3 +21,9 @@
 * Code block formatting in descriptions is now preserved (and will not be soft-broken to fit the width limit.)
 * haskell-suite in the "tested-with" field can now be rendered
 * Roundtrip test now checks an entire `GenericPackageDescription`, rather than just the `packageDescription` field
+
+## 0.3.0.0 -- 2018-03-02
+
+* Description rendering has been rewritten. Rather than naive reformatting, it now uses
+  the proper Haddock parser.
+* Show1/Eq1 instances for Result
