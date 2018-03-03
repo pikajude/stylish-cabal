@@ -76,22 +76,6 @@ deriving instance Eq PWarning
 
 instance NFData a => NFData (Result a)
 
-deriving instance Generic PError
-
-instance NFData Position
-
-deriving instance Generic Position
-
-instance NFData PWarning
-
-deriving instance Generic PWarning
-
-instance NFData PWarnType
-
-deriving instance Generic PWarnType
-
-instance NFData PError
-
 deriving instance Data PWarning
 
 deriving instance Data Position
@@ -99,6 +83,25 @@ deriving instance Data Position
 deriving instance Data PWarnType
 
 deriving instance Typeable PWarning
+
+-- FIXME once GHC HEAD bumps its cabal version
+#if __GLASGOW_HASKELL__ < 805
+instance NFData Position
+
+instance NFData PWarning
+
+instance NFData PWarnType
+
+instance NFData PError
+
+deriving instance Generic Position
+
+deriving instance Generic PWarning
+
+deriving instance Generic PWarnType
+
+deriving instance Generic PError
+#endif
 
 -- | This function is similar to Cabal's own file parser, except that it
 -- treats warnings as a separate failure case. There are a wide range of
