@@ -19,18 +19,17 @@ module Instances where
 import Data.ByteString.Short
 import Data.Word
 import Distribution.Compiler
-import Control.DeepSeq
-import qualified Distribution.SPDX as SPDX
 import Distribution.License
 import Distribution.ModuleName
-import Distribution.Types.Benchmark
-import Distribution.Types.Condition
+import qualified Distribution.SPDX as SPDX
 import Distribution.System
+import Distribution.Types.Benchmark
 import Distribution.Types.BenchmarkInterface
 import Distribution.Types.BenchmarkType
 import Distribution.Types.BuildInfo
 import Distribution.Types.BuildType
 import Distribution.Types.CondTree
+import Distribution.Types.Condition
 import Distribution.Types.Dependency
 import Distribution.Types.ExeDependency
 import Distribution.Types.Executable

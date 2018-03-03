@@ -12,10 +12,7 @@ module SortedPackageDescription.TH where
 
 import Control.Monad
 import Data.Char (toUpper)
-import Data.List (sort)
 import MultiSet
-import Debug.Trace
-import GHC.Generics
 import Language.Haskell.TH
 import Prelude.Compat
 

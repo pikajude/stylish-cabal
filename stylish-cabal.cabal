@@ -94,7 +94,7 @@ library test-utils
 
 executable stylish-cabal
   main-is:            Main.hs
-  build-depends:      base, base-compat, optparse-applicative, stylish-cabal
+  build-depends:      base, base-compat, bytestring, optparse-applicative, stylish-cabal
   default-language:   Haskell2010
   default-extensions: NoImplicitPrelude
   ghc-options:        -Wall

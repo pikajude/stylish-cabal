@@ -3,19 +3,9 @@
 
 import Control.DeepSeq
 import qualified Data.ByteString as B
-import Data.Word
-import Distribution.License
 import Distribution.PackageDescription
 import qualified Distribution.PackageDescription as C
 import Distribution.PackageDescription.Parsec
-import Distribution.Version
-import qualified GHC.Generics as GHC
-import Generics.SOP
-import Generics.SOP.TH
-import Instances
-import Distribution.PackageDescription
-import qualified Distribution.PackageDescription as C
-import Distribution.PackageDescription.Parse
 import Instances ()
 import Prelude.Compat
 import Pretty
@@ -47,7 +37,7 @@ main =
         ([], Right gpd) <-
             runIO $
             runParseResult . parseGenericPackageDescription <$>
-            B.readFile "tests/cabal-files/example"
+            B.readFile "tests/cabal-files/example.txt"
         describe "pretty" $
             it "should fully evaluate the package description" $ do
                 let expected = nf gpd
