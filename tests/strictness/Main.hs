@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 {-# Language FlexibleContexts #-}
 
 import Control.DeepSeq
@@ -12,16 +13,18 @@ import qualified GHC.Generics as GHC
 import Generics.SOP
 import Generics.SOP.TH
 import Instances
+import Distribution.PackageDescription
+import qualified Distribution.PackageDescription as C
+import Distribution.PackageDescription.Parse
+import Instances ()
 import Prelude.Compat
 import Pretty
 import StylishCabal
 import Test.Hspec hiding (shouldBe)
 import Test.Hspec.Expectations.Pretty
 import Test.StrictCheck.Demands
-import Test.StrictCheck.Instances
-import Test.StrictCheck.Instances.Tools
+import Test.StrictCheck.Instances ()
 import Test.StrictCheck.Observe
-import Test.StrictCheck.Shaped
 
 whnfContext = flip seq ()
 

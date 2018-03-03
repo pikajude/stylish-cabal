@@ -9,7 +9,6 @@ import Control.Arrow
 import Control.DeepSeq
 import Control.Monad
 import Data.Char
-import Data.Either
 import Data.Maybe
 import Distribution.License
 import Distribution.PackageDescription
@@ -124,7 +123,7 @@ libDataToFields Library {..} =
     ]
 
 foreignLibToBlock pkg libname CondNode {..} =
-    deepseq condTreeConstraints $
+    condTreeConstraints `deepseq`
     Block
         (ForeignLib_ $ unUnqualComponentName libname)
         (foreignLibDataToFields condTreeData ++

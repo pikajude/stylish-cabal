@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# Language CPP #-}
 {-# Language StandaloneDeriving #-}
 {-# Language DeriveGeneric #-}
 {-# Language DeriveDataTypeable #-}
@@ -30,13 +31,34 @@ import GHC.Generics
 import Prelude.Compat
 import System.Exit
 
+#if MIN_VERSION_base(4,9,0)
+import Data.Functor.Classes
+#endif
+
 -- | Like Cabal's @ParseResult@, but treats warnings as a separate failure
 -- case.
 data Result a
     = Error [PError] -- ^ Parse errors.
     | Warn [PWarning] -- ^ Warnings emitted during parse.
     | Success a -- ^ The input is a compliant package description.
-    deriving (Show, Eq, Functor, Generic, Generic1, Typeable, Data)
+    deriving (Show, Eq, Functor, Generic, Typeable, Data)
+
+#if MIN_VERSION_base(4,6,0)
+deriving instance Generic1 Result
+#endif
+
+#if MIN_VERSION_base(4,9,0)
+instance Show1 Result where
+    liftShowsPrec sp _ p (Success n) = showsUnaryWith sp "Success" p n
+    liftShowsPrec _ _ p (Warn pws) = showsUnaryWith showsPrec "Warn" p pws
+    liftShowsPrec _ _ p (Error s) = showsUnaryWith showsPrec "Error" p s
+
+instance Eq1 Result where
+    liftEq eq (Success a) (Success b) = eq a b
+    liftEq _ (Error s) (Error s2) = s == s2
+    liftEq _ (Warn pws) (Warn pws2) = pws == pws2
+    liftEq _ _ _ = False
+#endif
 
 -- | Case analysis for 'Result'.
 result :: ([PError] -> b) -> ([PWarning] -> b) -> (a -> b) -> Result a -> b
@@ -56,19 +78,19 @@ instance NFData a => NFData (Result a)
 
 deriving instance Generic PError
 
-deriving instance NFData Position
+instance NFData Position
 
 deriving instance Generic Position
 
-deriving instance NFData PWarning
+instance NFData PWarning
 
 deriving instance Generic PWarning
 
-deriving instance NFData PWarnType
+instance NFData PWarnType
 
 deriving instance Generic PWarnType
 
-deriving instance NFData PError
+instance NFData PError
 
 deriving instance Data PWarning
 

@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# Language CPP #-}
 {-# Language DataKinds #-}
 {-# Language TemplateHaskell #-}
@@ -60,7 +61,7 @@ import Distribution.Version
 import Generics.SOP.TH
 import Language.Haskell.Extension
 import Prelude.Compat
-import Test.StrictCheck.Instances
+import Test.StrictCheck.Instances ()
 import Test.StrictCheck.Instances.Tools
 import Test.StrictCheck.Shaped
 

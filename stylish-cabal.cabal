@@ -10,8 +10,7 @@ tested-with:        GHC == 8.4.1
 category:           Language
 build-type:         Simple
 extra-source-files: ChangeLog.md
-                    tests/cabal-files/example
-                    tests/cabal-files/hpc-coveralls
+                    tests/cabal-files/*.txt
 cabal-version:      2.0
 
 source-repository head
@@ -40,53 +39,62 @@ library
   other-modules:      Parse
                       Render
                       Render.Lib
+                      Render.Lib.Haddock
                       Render.Options
                       Transform
                       Types.Block
                       Types.Field
   hs-source-dirs:     src
-  build-depends:      base                 == 4.*
-                    , Cabal                == 2.1.0.0
+  build-depends:      base            == 4.*
+                    , Cabal           == 2.1.*
                     , ansi-wl-pprint
                     , base-compat
                     , data-default
                     , deepseq
+                    , haddock-library
                     , mtl
-                    , optparse-applicative
                     , split
   default-language:   Haskell2010
   default-extensions: NoMonomorphismRestriction
                       NoImplicitPrelude
   ghc-options:        -Wall -fno-warn-missing-signatures
 
+  if impl(ghc < 7.6)
+    build-depends: ghc-prim
+
   if flag(werror)
     ghc-options: -Werror
 
 library test-utils
-  exposed-modules:  Expectations
-                    SortedPackageDescription
-  other-modules:    MultiSet
-                    SortedPackageDescription.TH
-  hs-source-dirs:   tests/utils
-  build-depends:    base
-                  , Cabal
-                  , base-compat
-                  , containers
-                  , hspec
-                  , hspec-core
-                  , stylish-cabal
-                  , template-haskell
-                  , utf8-string
-  default-language: Haskell2010
+  exposed-modules:    Expectations
+                      SortedPackageDescription
+  other-modules:      MultiSet
+                      SortedPackageDescription.TH
+  hs-source-dirs:     tests/utils
+  build-depends:      base
+                    , Cabal
+                    , base-compat
+                    , containers
+                    , haddock-library
+                    , hspec
+                    , hspec-core
+                    , hspec-expectations-pretty-diff
+                    , microlens
+                    , microlens-th
+                    , split
+                    , stylish-cabal
+                    , template-haskell
+                    , utf8-string
+  default-language:   Haskell2010
+  default-extensions: NoImplicitPrelude
+  ghc-options:        -Wall -fno-warn-missing-signatures
+
+  if flag(werror)
+    ghc-options: -Werror
 
 executable stylish-cabal
   main-is:            Main.hs
-  build-depends:      base
-                    , ansi-wl-pprint
-                    , base-compat
-                    , bytestring
-                    , optparse-applicative
-                    , stylish-cabal
+  build-depends:      base, base-compat, optparse-applicative, stylish-cabal
   default-language:   Haskell2010
   default-extensions: NoImplicitPrelude
   ghc-options:        -Wall
@@ -113,7 +121,7 @@ test-suite strictness
                     , stylish-cabal
   default-language:   Haskell2010
   default-extensions: NoImplicitPrelude
-  ghc-options:        -freduction-depth=0
+  ghc-options:        -freduction-depth=0 -Wall
 
   if flag(werror)
     ghc-options: -Werror
@@ -125,20 +133,7 @@ test-suite roundtrip
   type:               exitcode-stdio-1.0
   main-is:            Main.hs
   hs-source-dirs:     tests/roundtrip
-  build-depends:      base
-                    , Cabal
-                    , ansi-wl-pprint
-                    , base-compat
-                    , bytestring
-                    , containers
-                    , hspec
-                    , hspec-core
-                    , hspec-expectations-pretty-diff
-                    , pretty-show
-                    , stylish-cabal
-                    , template-haskell
-                    , test-utils
-                    , utf8-string
+  build-depends:      base, base-compat, bytestring, hspec, test-utils
   default-language:   Haskell2010
   default-extensions: NoImplicitPrelude
   ghc-options:        -Wall -fno-warn-missing-signatures
@@ -151,18 +146,13 @@ test-suite roundtrip-hackage
   main-is:            Hackage.hs
   hs-source-dirs:     tests/roundtrip
   build-depends:      base
-                    , Cabal
                     , aeson
-                    , ansi-wl-pprint
                     , base-compat
                     , bytestring
-                    , containers
                     , hspec
                     , hspec-core
-                    , hspec-expectations-pretty-diff
                     , lens
                     , mwc-random
-                    , stylish-cabal
                     , test-utils
                     , utf8-string
                     , vector

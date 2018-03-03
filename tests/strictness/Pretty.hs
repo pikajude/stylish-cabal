@@ -4,14 +4,16 @@
 module Pretty where
 
 import Data.Bifunctor
-import Generics.SOP (Associativity(..))
+import Generics.SOP (Associativity(..), Fixity)
 import Prelude.Compat
 import Test.StrictCheck.Observe
 import Test.StrictCheck.Shaped
 import Text.PrettyPrint.ANSI.Leijen
 
+pprint :: Shaped a => Demand a -> String
 pprint = showThunk False "_" 10
 
+showThunk :: Shaped a => Bool -> Doc -> Fixity -> Demand a -> String
 showThunk a b c d = flip displayS "" $ renderPretty 1.0 90 $ go a b c (renderfold d)
   where
     go _ thunk _ (RWrap T) = thunk
@@ -34,10 +36,10 @@ showThunk a b c d = flip displayS "" $ renderPretty 1.0 90 $ go a b c (renderfol
                               string (qualify' fName) <+>
                               char '=' <+> go qualify thunk 11 x)
                          recfields)
-            CustomD fixity list ->
+            CustomD fixity ls ->
                 withParens (prec > fixity) $
                 hcat $
-                flip fmap list $
+                flip fmap ls $
                 extractEither .
                 bimap (string . qualifyEither) (uncurry $ go qualify thunk)
             InfixD name assoc fixity l r ->

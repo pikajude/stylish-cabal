@@ -43,4 +43,4 @@ applySkips i =
                       x -> return x
         }
 
-mkHeader p = "parses " ++ p
+mkHeader n p = "parses #" ++ show n ++ ": " ++ p

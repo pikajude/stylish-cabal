@@ -1,9 +1,10 @@
-{-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# OPTIONS_GHC
+  -fno-warn-orphans -fno-warn-unused-binds -fno-warn-deprecations #-}
 {-# Language UndecidableInstances #-}
 {-# Language NamedFieldPuns #-}
+{-# Language NoMonomorphismRestriction #-}
 {-# Language FlexibleContexts #-}
 {-# Language TemplateHaskell #-}
-{-# Language TypeApplications #-}
 {-# Language RecordWildCards #-}
 {-# Language StandaloneDeriving #-}
 {-# Language TypeFamilies #-}
@@ -15,6 +16,9 @@ module SortedPackageDescription
     ) where
 
 import Data.Char (isSpace)
+import Data.List (sortBy)
+import Data.List.Split
+import Data.Ord (comparing)
 import Data.Word
 import Distribution.Compiler
 import Distribution.License
@@ -30,6 +34,8 @@ import Distribution.Types.ForeignLib
 import Distribution.Types.ForeignLibOption
 import Distribution.Types.ForeignLibType
 import Distribution.Types.IncludeRenaming
+import Lens.Micro.TH
+import Lens.Micro
 import Distribution.Types.LegacyExeDependency
 import Distribution.Types.Mixin
 import Distribution.Types.PackageId
@@ -39,22 +45,80 @@ import Distribution.Types.PkgconfigName
 import Distribution.Types.UnqualComponentName
 import Distribution.Types.Version
 import Distribution.Types.VersionRange
+import Documentation.Haddock.Types hiding (Version)
+import Documentation.Haddock.Parser
 import Distribution.Utils.ShortText
 import Language.Haskell.Extension
 import Prelude.Compat
 import SortedPackageDescription.TH
 
-sortGenericPackageDescription = sortable @GenericPackageDescription . squashDescription
+deriving instance (Ord a, Ord b) => Ord (DocH a b)
+
+deriving instance Ord a => Ord (Header a)
+
+deriving instance Ord Hyperlink
+
+deriving instance Ord Picture
+
+deriving instance Ord Example
+
+makeLensesFor
+    [ ("packageDescription", "packageDescriptionL")
+    , ("genPackageFlags", "genPackageFlagsL")
+    ]
+    ''GenericPackageDescription
+
+makeLensesFor
+    [("description", "descriptionL"), ("synopsis", "synopsisL")]
+    ''PackageDescription
+
+sortGenericPackageDescription ::
+       GenericPackageDescription
+    -> ([DocH () String], MkSortable GenericPackageDescription)
+sortGenericPackageDescription gpd = (descriptions, sortable desc)
   where
-    squashDescription g@GenericPackageDescription {..} =
-        g
-            { packageDescription = squashPD packageDescription
-            , genPackageFlags = map squashFlag genPackageFlags
-            }
-    squashPD p@PackageDescription {..} =
-        p {description = squash description, synopsis = squash synopsis}
-    squashFlag f@MkFlag {..} = f {flagDescription = squash flagDescription}
-    squash = filter (not . isSpace)
+    (descriptions, desc) = extractDescs gpd
+    flagDescriptionL = lens flagDescription (\f d -> f {flagDescription = d})
+    extractDescs g =
+        let (dsc, gpd1) = g & (packageDescriptionL . descriptionL) <<.~ ""
+            (syn, gpd2) = gpd1 & (packageDescriptionL . synopsisL) <<.~ ""
+            (fs, gpd3) =
+                gpd2 &
+                (genPackageFlagsL . traverse) (\x -> ([x], x {flagDescription = ""}))
+            sortedFlags = sortBy (comparing flagName) fs
+         in ( map (unNl . toRegular . _doc . parseParas) $
+              dsc : syn : map flagDescription sortedFlags
+            , gpd3)
+    unNl :: DocH () String -> DocH () String
+    unNl (DocString s) = DocString $ unwords $ wordsBy isSpace s
+    unNl (DocEmphasis x) = DocEmphasis $ unNl x
+    unNl (DocAppend a b) = DocAppend (unNl a) (unNl b)
+    unNl (DocParagraph d) = DocParagraph $ unNl d
+    unNl (DocBold d) = DocBold (unNl d)
+    unNl (DocCodeBlock d) = DocCodeBlock $ unNl d
+    unNl (DocDefList bs) = DocDefList $ map (\(x, y) -> (unNl x, unNl y)) bs
+    unNl (DocUnorderedList b) = DocUnorderedList (map unNl b)
+    unNl (DocMonospaced d) = DocMonospaced (unNl d)
+    unNl (DocOrderedList ds) = DocOrderedList (map unNl ds)
+    unNl DocEmpty = DocEmpty
+    unNl d@DocHeader {} = d
+    unNl d@DocMathDisplay {} = d
+    unNl d@DocExamples {} = d
+    unNl d@DocPic {} = d
+    unNl (DocHyperlink (Hyperlink h l)) =
+        DocHyperlink $
+        Hyperlink
+            h
+            (map (\x ->
+                      if x == '\n'
+                          then ' '
+                          else x) <$>
+             l)
+    unNl d@DocIdentifier {} = d
+    unNl d@DocModule {} = d
+    unNl d@DocMathInline {} = d
+    unNl d@DocAName {} = d
+    unNl x = error $ show x
 
 prim [''ModuleName, ''ShortText, ''Char, ''Word64, ''PackageName, ''Int, ''Bool]
 

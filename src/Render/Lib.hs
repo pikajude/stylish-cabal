@@ -5,22 +5,17 @@ module Render.Lib
     ( P(..)
     , renderBlockHead
     , showVersionRange
-    , showExtension
     , moduleDoc
     , rexpModuleDoc
-    , showFlibType
-    , showFlibOpt
     , filepath
     , renderTestedWith
-    , showLicense
-    , showLicenseExpr
     , exeDependencyAsDependency
+    , renderDescription
     ) where
 
 import Data.Char
 import Data.List.Compat
 import Distribution.Compiler
-import Distribution.License
 import Distribution.ModuleName
 import Distribution.PackageDescription
 import Distribution.Pretty
@@ -31,6 +26,7 @@ import Distribution.Version
 import Prelude.Compat
 import Text.PrettyPrint.ANSI.Leijen hiding ((<$>))
 
+import Render.Lib.Haddock (renderDescription)
 import Render.Options
 import Types.Block
 
@@ -44,22 +40,12 @@ instance Ord P where
     compare _ (P "base") = GT
     compare (P p1) (P p2) = compare p1 p2
 
-showFlibType = prettyShow
-
-showFlibOpt = prettyShow
-
-showLicense :: License -> String
-showLicense = prettyShow
-
-showLicenseExpr = prettyShow
-
 renderTestedWith ts =
     fillSep . punctuate comma <$>
     mapM (\(compiler, vers) -> showVersioned (showCompiler compiler, vers)) ts
   where
     showCompiler (OtherCompiler x) = x
-    showCompiler HaskellSuite {} =
-        error "Not sure what to do with HaskellSuite value in tested-with field"
+    showCompiler (HaskellSuite x) = x
     showCompiler x = show x
 
 showVersioned :: (String, VersionRange) -> Render Doc
@@ -88,6 +74,7 @@ showVersionRange r = do
     fold' (IntersectVersionRangesF a b) = a <+> green "&&" <+> b
     fold' (VersionRangeParensF a) = parens a
 
+
 filepath :: String -> Doc
 filepath x
     | null x = string "\"\""
@@ -101,8 +88,6 @@ rexpModuleDoc (ModuleReexport pkg origname name) =
     (if origname == name
          then moduleDoc origname
          else moduleDoc origname <+> "as" <+> moduleDoc name)
-
-showExtension = prettyShow
 
 exeDependencyAsDependency (ExeDependency pkg comp vers) =
     (P $ unPackageName pkg ++ ":" ++ unUnqualComponentName comp, vers)
@@ -144,7 +129,7 @@ maybeParens p =
 
 showVar :: ConfVar -> Render Doc
 showVar (Impl compiler vers) = do
-    v <- showVersioned (map toLower $ show compiler, vers)
+    v <- showVersioned (prettyShow compiler, vers)
     pure $ dullgreen $ string "impl" <> parens (dullblue v)
 showVar (Flag f) =
     pure $ dullgreen $ string "flag" <> parens (dullblue $ string (unFlagName f))
