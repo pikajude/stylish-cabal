@@ -30,9 +30,8 @@ flag test-hackage
 flag test-strictness
   default:     False
   manual:      True
-  description:
-    Run the strictness testsuite. This requires the StrictCheck package which is not yet
-    on Hackage, and thus is disabled by default.
+  description: Run the strictness testsuite. This requires the StrictCheck package which
+               is not yet on Hackage, and thus is disabled by default.
 
 library
   exposed-modules:    StylishCabal
@@ -52,6 +51,7 @@ library
                     , data-default
                     , deepseq
                     , haddock-library
+                    , microlens
                     , mtl
                     , split
   default-language:   Haskell2010

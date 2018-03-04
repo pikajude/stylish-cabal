@@ -21,6 +21,7 @@ import Distribution.Types.PackageName
 import Distribution.Types.PkgconfigDependency
 import Distribution.Types.PkgconfigName
 import Distribution.Version
+import Documentation.Haddock.Types
 import Prelude.Compat hiding ((<$>))
 import qualified Prelude.Compat as P
 import Text.PrettyPrint.ANSI.Leijen
@@ -31,10 +32,6 @@ import Types.Block
 import Types.Field
 
 deriving instance Ord ModuleReexport
-
-data Paragraph = Words String
-               | Code [String]
-               deriving Show
 
 fieldValueToDoc k (Field _ f) =
     case f of
@@ -57,7 +54,7 @@ fieldValueToDoc k (Field _ f) =
     val' (Version v) = pure $ string $ prettyShow v
     val' (CabalVersion (Left v)) = pure $ string $ prettyShow v
     val' (CabalVersion (Right vr))
-        | vr == anyVersion = showVersionRange (orLaterVersion (mkVersion [1,10]))
+        | vr == anyVersion = showVersionRange (orLaterVersion (mkVersion [1, 10]))
         | otherwise = showVersionRange vr
     val' (License l) = pure $ string $ prettyShow l
     val' (SPDXLicense l) = pure $ string $ prettyShow l
@@ -75,7 +72,12 @@ fieldValueToDoc k (Description s) = descriptionToDoc k s
 
 descriptionToDoc k paras = do
     n <- asks indentSize
-    return $ (<>) colon $ nest n $ flatAlt (linebreak <> ds) (indent (k + 1) ds)
+    return $
+        (<>) colon $
+        nest n $
+        case paras of
+            DocParagraph {} -> indent (k + 1) ds
+            _ -> linebreak <> ds
   where
     ds = renderDescription paras
 
