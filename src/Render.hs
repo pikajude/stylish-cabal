@@ -20,6 +20,7 @@ import Distribution.Types.PackageName
 import Distribution.Types.PkgconfigDependency
 import Distribution.Types.PkgconfigName
 import Distribution.Version
+import Documentation.Haddock.Types
 import Prelude.Compat hiding ((<$>))
 import qualified Prelude.Compat as P
 import Text.PrettyPrint.ANSI.Leijen
@@ -69,7 +70,12 @@ fieldValueToDoc k (Description s) = descriptionToDoc k s
 
 descriptionToDoc k paras = do
     n <- asks indentSize
-    return $ (<>) colon $ nest n $ flatAlt (linebreak <> ds) (indent (k + 1) ds)
+    return $
+        (<>) colon $
+        nest n $
+        case paras of
+            DocParagraph {} -> indent (k + 1) ds
+            _ -> linebreak <> ds
   where
     ds = renderDescription paras
 
