@@ -1,12 +1,13 @@
 name:               stylish-cabal
 version:            0.3.0.0
 synopsis:           Format Cabal files
-description:        A tool for nicely formatting your Cabal file.
+description:
+  A tool for nicely formatting your Cabal file.
 license:            BSD3
 license-file:       LICENSE
 author:             Jude Taylor
 maintainer:         me@jude.xyz
-tested-with:        GHC == 8.4.1
+tested-with:        GHC == 8.4.1, GHC == 8.5
 category:           Language
 build-type:         Simple
 extra-source-files: ChangeLog.md
@@ -20,18 +21,21 @@ source-repository head
 flag werror
   default:     False
   manual:      True
-  description: build with -Werror
+  description:
+    build with -Werror
 
 flag test-hackage
   default:     False
   manual:      True
-  description: Should I test all Hackage cabal files?
+  description:
+    Should I test all Hackage cabal files?
 
 flag test-strictness
   default:     False
   manual:      True
-  description: Run the strictness testsuite. This requires the StrictCheck package which
-               is not yet on Hackage, and thus is disabled by default.
+  description:
+    Run the strictness testsuite. This requires the StrictCheck package which is not yet
+    on Hackage, and thus is disabled by default.
 
 library
   exposed-modules:    StylishCabal
