@@ -7,7 +7,7 @@ license-file:       LICENSE
 author:             Jude Taylor
 maintainer:         me@jude.xyz
 tested-with:        GHC == 7.4.2, GHC == 7.6.3, GHC == 7.8.4, GHC == 7.10.3, GHC == 8.0.2,
-                    GHC == 8.2.2, GHC == 8.4.1, GHC == 8.5
+                    GHC == 8.2.2, GHC == 8.4.1, GHC == 8.5.*
 category:           Language
 build-type:         Simple
 extra-source-files: ChangeLog.md
@@ -79,7 +79,6 @@ library test-utils
                     , haddock-library
                     , hspec
                     , hspec-core
-                    , hspec-expectations-pretty-diff
                     , microlens
                     , microlens-th
                     , split
