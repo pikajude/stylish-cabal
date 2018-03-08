@@ -55,6 +55,9 @@ import SortedPackageDescription.TH
 deriving instance (Ord a, Ord b) => Ord (DocH a b)
 
 deriving instance Ord a => Ord (Header a)
+deriving instance Ord a => Ord (Table a)
+deriving instance Ord a => Ord (TableRow a)
+deriving instance Ord a => Ord (TableCell a)
 
 deriving instance Ord Hyperlink
 

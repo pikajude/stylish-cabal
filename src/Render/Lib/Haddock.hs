@@ -120,7 +120,7 @@ renderDescription =
     go (DocPic (Picture p t)) =
         return $
         enclose (green "<<") (green ">>") (string $ p ++ maybe "" (" " ++) (unNl <$> t))
-    go x = error $ show x
+    go x = error $ "Unhandled Haddock AST node: " ++ show x
     unNl =
         map
             (\x ->
