@@ -1,4 +1,3 @@
-{-# OPTIONS_GHC -fno-warn-deprecations #-}
 {-# Language FlexibleContexts #-}
 {-# Language OverloadedStrings #-}
 
@@ -6,7 +5,6 @@ module Render.Lib
     ( P(..)
     , renderBlockHead
     , showVersionRange
-    , prettyShow
     , moduleDoc
     , rexpModuleDoc
     , filepath
@@ -20,29 +18,17 @@ import Data.List.Compat
 import Distribution.Compiler
 import Distribution.ModuleName
 import Distribution.PackageDescription
-import Distribution.Text
+import Distribution.Pretty
 import Distribution.Types.ExeDependency
 import Distribution.Types.PackageName
 import Distribution.Types.UnqualComponentName
-import Distribution.Version hiding (foldVersionRange)
+import Distribution.Version
 import Prelude.Compat
 import Text.PrettyPrint.ANSI.Leijen hiding ((<$>))
 
 import Render.Lib.Haddock (renderDescription)
 import Render.Options
 import Types.Block
-
-prettyShow = show . disp
-
-wildcardUpperBound =
-    alterVersion $ \lowerBound -> init lowerBound ++ [last lowerBound + 1]
-
-majorUpperBound :: Version -> Version
-majorUpperBound = alterVersion go
-  where
-    go [] = [0, 1]
-    go [m1] = [m1, 1]
-    go (m1:m2:_) = [m1, m2 + 1]
 
 newtype P = P
     { unP :: String
@@ -70,56 +56,24 @@ showVersioned (pn, v')
 showVersionRange r = do
     opts <- ask
     return $
-        foldVersionRange
-            empty
-            (\v -> green "==" <+> dullyellow (string (showVersion v)))
-            (\v -> green ">" <+> dullyellow (string (showVersion v)))
-            (\v -> green "<" <+> dullyellow (string (showVersion v)))
-            (\v -> green ">=" <+> dullyellow (string (showVersion v)))
-            (\v -> green "<=" <+> dullyellow (string (showVersion v)))
-            (\v _ -> green "==" <+> dullyellow (string (showVersion v) <> ".*"))
-            (\v _ -> green "^>=" <+> dullyellow (string (showVersion v)))
-            (\a b -> a <+> green "||" <+> b)
-            (\a b -> a <+> green "&&" <+> b)
-            parens .
+        cataVersionRange fold' $
         (if simplifyVersions opts
              then simplifyVersionRange
-             else id) $
-        r
-
-{------------ EVIL HACK GOES HERE ---------------
--
-- Distribution.Version.foldVersionRange' treats both of the following
--   * "(== v) || (> v)"
--   * "(> v) || (== v)"
-- as "(>= v)"
--
-- Makes sense, right? Nope. ">=" is always Union (This ...) (Later ...),
-- whereas if Union (Later ...) (This ...) is present in the source file, we
-- must preserve it, otherwise roundtrip tests fail because we're switching
-- the order of the Union arguments!
--
-- The other solution is to wrap VersionRange in a newtype that disregards
-- Union argument ordering for the equality test, but I leave that as an
-- exercise to the reader.
--
-- Arguments renamed to avoid shadowing
--}
-foldVersionRange anyv this later earlier orL orE wildcard major both oneof wrap = fold
+             else id)
+            r
   where
-    fold AnyVersion = anyv
-    fold (ThisVersion v) = this v
-    fold (LaterVersion v) = later v
-    fold (EarlierVersion v) = earlier v
-    fold (UnionVersionRanges (ThisVersion v) (LaterVersion v'))
-        | v == v' = orL v
-    fold (UnionVersionRanges (ThisVersion v) (EarlierVersion v'))
-        | v == v' = orE v
-    fold (WildcardVersion v) = wildcard v (wildcardUpperBound v)
-    fold (MajorBoundVersion v) = major v (majorUpperBound v)
-    fold (UnionVersionRanges v1 v2) = both (fold v1) (fold v2)
-    fold (IntersectVersionRanges v1 v2) = oneof (fold v1) (fold v2)
-    fold (VersionRangeParens v) = wrap (fold v)
+    fold' AnyVersionF = empty
+    fold' (ThisVersionF v) = green "==" <+> dullyellow (string (prettyShow v))
+    fold' (LaterVersionF v) = green ">" <+> dullyellow (string (prettyShow v))
+    fold' (OrLaterVersionF v) = green ">=" <+> dullyellow (string (prettyShow v))
+    fold' (EarlierVersionF v) = green "<" <+> dullyellow (string (prettyShow v))
+    fold' (OrEarlierVersionF v) = green "<=" <+> dullyellow (string (prettyShow v))
+    fold' (WildcardVersionF v) = green "==" <+> dullyellow (string (prettyShow v) <> ".*")
+    fold' (MajorBoundVersionF v) = green "^>=" <+> dullyellow (string (prettyShow v))
+    fold' (UnionVersionRangesF a b) = a <+> green "||" <+> b
+    fold' (IntersectVersionRangesF a b) = a <+> green "&&" <+> b
+    fold' (VersionRangeParensF a) = parens a
+
 
 filepath :: String -> Doc
 filepath x

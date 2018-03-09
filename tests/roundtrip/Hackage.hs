@@ -16,6 +16,13 @@ import System.Environment
 import System.IO
 import System.Random.MWC
 import System.Random.MWC.Distributions
+import Data.ByteString.Lazy (toStrict)
+import System.IO
+import Test.Hspec
+import Prelude.Compat
+import qualified Data.Vector as V
+import Test.Hspec.Core.Spec
+import Expectations
 import Test.Hspec
 import Test.Hspec.Core.Spec
 import Text.Read (readMaybe)
@@ -68,7 +75,7 @@ testHackage = do
                     get $
                     "http://hackage.haskell.org/package/" ++
                     pname ++ "/revision/" ++ show (number recent) ++ ".cabal"
-                expectParse $ toString $ view responseBody cabalFile
+                expectParse $ toStrict $ view responseBody cabalFile
 
 isProblematic _ = False
 

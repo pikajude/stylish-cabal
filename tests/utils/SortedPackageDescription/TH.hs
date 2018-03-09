@@ -1,6 +1,7 @@
 {-# Language CPP #-}
 {-# Language NoMonomorphismRestriction #-}
 {-# Language TemplateHaskell #-}
+{-# Language ConstraintKinds #-}
 {-# Language UndecidableInstances #-}
 {-# Language FlexibleContexts #-}
 {-# Language FlexibleInstances #-}
@@ -8,16 +9,12 @@
 {-# Language DefaultSignatures #-}
 {-# Language TypeFamilies #-}
 
-#if !MIN_VERSION_base(4,6,0)
-{-# Language ConstraintKinds #-}
-#endif
-
 module SortedPackageDescription.TH where
 
 import Control.Monad.Compat
 import Data.Char (toUpper)
-import Language.Haskell.TH
 import MultiSet
+import Language.Haskell.TH
 import Prelude.Compat
 
 class Sortable a where

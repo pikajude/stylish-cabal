@@ -3,45 +3,33 @@
 
 module Expectations where
 
-import Control.Monad
+import qualified Data.ByteString.UTF8 as U
 import Data.List.Compat
-import Distribution.PackageDescription.Parse
+import Distribution.PackageDescription.Parsec
 import Prelude.Compat
 import SortedPackageDescription
 import StylishCabal as S
 import Test.Hspec
-import Test.Hspec.Core.Runner
 import Test.Hspec.Core.Spec
--- import Test.Hspec.Expectations.Pretty
-
-deriving instance Eq a => Eq (ParseResult a)
+import Test.Hspec.Core.Runner
 
 hspecColor = hspecWith (defaultConfig {configColorMode = ColorAlways})
 
 expectParse cabalStr = do
-    -- massive width limit is because:
-    --
-    -- edge case: a line ending in " ." will be word-wrapped to the next
-    -- line. unfortunately a "." on its own on a line means paragraph break
-    -- to the haddock parser. this case breaks tests on some hackage
-    -- packages, but is unlikely to be problematic in practice (because you
-    -- should just remove the leading space)
-    let proc = (`displayS` "") . render (maxBound `div` 10) . plain
-        doc = proc . pretty <$> S.parsePackageDescription cabalStr
+    let doc =
+            U.fromString . (`displayS` "") . render 80 . plain . pretty <$>
+            S.parsePackageDescription cabalStr
     case doc of
         S.Success rendered -> do
-            let ParseOk _ (descrs, original) =
-                    sortGenericPackageDescription <$> parse' cabalStr
-                ParseOk _ (descrs2, new) =
-                    sortGenericPackageDescription <$> parse' rendered
+            let ([], Right original) = fmap sortGenericPackageDescription <$> parse' cabalStr
+                ([], Right new) = fmap sortGenericPackageDescription <$> parse' rendered
             shouldBe original new
-            forM_ (zip descrs descrs2) (uncurry shouldBe)
         Warn {} ->
             expectationFailure
                 "SKIP Warnings generated from original file, cannot guarantee consistency of output"
         S.Error {} -> expectationFailure "SKIP Original cabal file does not parse"
   where
-    parse' = parseGenericPackageDescription
+    parse' = runParseResult . parseGenericPackageDescription
 
 applySkips i =
     i

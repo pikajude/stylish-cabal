@@ -10,6 +10,7 @@ module Render
 import Data.List.Compat hiding (group)
 import Data.Maybe
 import Data.Ord
+import Distribution.Pretty
 import Distribution.Types.Dependency
 import Distribution.Types.IncludeRenaming
 import Distribution.Types.LegacyExeDependency
@@ -52,10 +53,11 @@ fieldValueToDoc k (Field _ f) =
     val' (File x) = pure $ filepath x
     val' (Version v) = pure $ string $ prettyShow v
     val' (CabalVersion (Left v)) = pure $ string $ prettyShow v
-    val' (CabalVersion (Right v))
-        | v == anyVersion = showVersionRange (orLaterVersion (mkVersion [1, 10]))
-        | otherwise = showVersionRange v
+    val' (CabalVersion (Right vr))
+        | vr == anyVersion = showVersionRange (orLaterVersion (mkVersion [1, 10]))
+        | otherwise = showVersionRange vr
     val' (License l) = pure $ string $ prettyShow l
+    val' (SPDXLicense l) = pure $ string $ prettyShow l
     val' (TestedWith ts) = renderTestedWith ts
     val' (LongList fs) = pure $ vcat $ map filepath fs
     val' (Commas fs) = pure $ fillSep $ punctuate comma $ map filepath fs

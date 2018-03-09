@@ -24,6 +24,7 @@ import Distribution.Compiler
 import Distribution.License
 import Distribution.ModuleName
 import Distribution.PackageDescription
+import qualified Distribution.SPDX as SPDX
 import Distribution.System
 import Distribution.Types.CondTree
 import Distribution.Types.Dependency
@@ -33,6 +34,8 @@ import Distribution.Types.ForeignLib
 import Distribution.Types.ForeignLibOption
 import Distribution.Types.ForeignLibType
 import Distribution.Types.IncludeRenaming
+import Lens.Micro.TH
+import Lens.Micro
 import Distribution.Types.LegacyExeDependency
 import Distribution.Types.Mixin
 import Distribution.Types.PackageId
@@ -40,26 +43,21 @@ import Distribution.Types.PackageName
 import Distribution.Types.PkgconfigDependency
 import Distribution.Types.PkgconfigName
 import Distribution.Types.UnqualComponentName
-import Distribution.Utils.ShortText
-import Distribution.Version
+import Distribution.Types.Version
+import Distribution.Types.VersionRange
+import Documentation.Haddock.Types hiding (Version)
 import Documentation.Haddock.Parser
-import Documentation.Haddock.Types
-    ( DocH(..)
-    , Example(..)
-    , Header(..)
-    , Hyperlink(..)
-    , Picture(..)
-    , _doc
-    )
+import Distribution.Utils.ShortText
 import Language.Haskell.Extension
-import Lens.Micro
-import Lens.Micro.TH
 import Prelude.Compat
 import SortedPackageDescription.TH
 
 deriving instance (Ord a, Ord b) => Ord (DocH a b)
 
 deriving instance Ord a => Ord (Header a)
+deriving instance Ord a => Ord (Table a)
+deriving instance Ord a => Ord (TableRow a)
+deriving instance Ord a => Ord (TableCell a)
 
 deriving instance Ord Hyperlink
 
@@ -126,6 +124,16 @@ sortGenericPackageDescription gpd = (descriptions, sortable desc)
     unNl x = error $ show x
 
 prim [''ModuleName, ''ShortText, ''Char, ''Word64, ''PackageName, ''Int, ''Bool]
+
+deriveSortable_
+    "SPDX"
+    [ ''SPDX.LicenseExceptionId
+    , ''SPDX.LicenseRef
+    , ''SPDX.LicenseId
+    , ''SPDX.SimpleLicenseExpression
+    , ''SPDX.LicenseExpression
+    , ''SPDX.License
+    ]
 
 deriveSortable
     [ ''BuildType

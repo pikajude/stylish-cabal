@@ -4,7 +4,7 @@ Automatic formatting for Cabal files.
 
 ## Examples
 
-[example.cabal](tests/example.cabal) and [example-out.cabal](tests/example-out.cabal)
+[example.cabal](tests/cabal-files/example) and [example-out.cabal](tests/cabal-files/example-out)
 demonstrate what `stylish-cabal` does.
 
 ## Usage

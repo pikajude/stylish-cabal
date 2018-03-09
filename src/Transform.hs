@@ -68,7 +68,10 @@ pdToFields pd@PackageDescription {..} =
     , version "version" (pkgVersion package)
     , nonEmpty (stringField "synopsis") synopsis
     , desc description
-    , ffilter (/= UnspecifiedLicense) (licenseField "license") license
+    , either
+          (spdxLicenseField "license")
+          (ffilter (/= UnspecifiedLicense) (licenseField "license"))
+          licenseRaw
     , license' licenseFiles
     , nonEmpty (stringField "copyright") copyright
     , nonEmpty (stringField "author") author
@@ -79,7 +82,7 @@ pdToFields pd@PackageDescription {..} =
     , nonEmpty (stringField "homepage") homepage
     , nonEmpty (stringField "package-url") pkgUrl
     , nonEmpty (stringField "bug-reports") bugReports
-    , stringField "build-type" . show =<< buildType
+    , stringField "build-type" . show =<< buildTypeRaw
     , nonEmpty (longList "extra-tmp-files") extraTmpFiles
     , nonEmpty (longList "extra-source-files") extraSrcFiles
     , nonEmpty (longList "extra-doc-files") extraDocFiles
@@ -206,8 +209,10 @@ condNodeToBlock pkg getBuildInfo extra (CondBranch pred' branch1 branch2) =
      in b1 : maybeToList b2
 
 buildInfoToFields _ BuildInfo {..} =
+    staticOptions `seq` -- staticOptions isn't in the parser yet
     [ nonEmpty (commas "other-languages" . map show) otherLanguages
     , nonEmpty (modules "other-modules") otherModules
+    , nonEmpty (modules "virtual-modules") virtualModules
     , nonEmpty (mixins_ "mixins") mixins
     , nonEmpty (modules "autogen-modules") autogenModules
     , nonEmpty (commas "hs-source-dirs") hsSourceDirs
@@ -216,20 +221,28 @@ buildInfoToFields _ BuildInfo {..} =
     , nonEmpty (extensions "default-extensions") defaultExtensions
     , nonEmpty (extensions "extensions") oldExtensions
     , nonEmpty (extensions "other-extensions") otherExtensions
+    , nonEmpty (commas "extra-library-flavours") extraLibFlavours
     , nonEmpty (commas "extra-libraries") extraLibs
     , nonEmpty (commas "extra-ghci-libraries") extraGHCiLibs
+    , nonEmpty (commas "extra-bundled-libraries") extraBundledLibs
     , nonEmpty (pcDepends "pkgconfig-depends") pkgconfigDepends
     , nonEmpty (commas "frameworks") frameworks
     , nonEmpty (commas "extra-framework-dirs") extraFrameworkDirs
-    , nonEmpty (spaces "cpp-options") cppOptions
     , nonEmpty (spaces "cc-options") ccOptions
+    , nonEmpty (spaces "cxx-options") cxxOptions
+    , nonEmpty (spaces "cmm-options") cmmOptions
+    , nonEmpty (spaces "asm-options") asmOptions
+    , nonEmpty (spaces "cpp-options") cppOptions
     , nonEmpty (spaces "ld-options") ldOptions
+    , nonEmpty (commas "js-sources") jsSources
+    , nonEmpty (commas "cxx-sources") cxxSources
     , nonEmpty (commas "c-sources") cSources
+    , nonEmpty (commas "cmm-sources") cmmSources
+    , nonEmpty (commas "asm-sources") asmSources
     , nonEmpty (commas "extra-lib-dirs") extraLibDirs
     , nonEmpty (commas "includes") includes
     , nonEmpty (commas "install-includes") installIncludes
     , nonEmpty (commas "include-dirs") includeDirs
-    , nonEmpty (commas "js-sources") jsSources
     , ffilter not (stringField "buildable" . show) buildable
     , nonEmpty (toolDepends "build-tool-depends") newTools
     , nonEmpty (oldToolDepends "build-tools") oldTools

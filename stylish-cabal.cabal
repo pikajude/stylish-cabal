@@ -1,5 +1,5 @@
 name:               stylish-cabal
-version:            0.3.0.0
+version:            0.3.1.0
 synopsis:           Format Cabal files
 description:        A tool for nicely formatting your Cabal file.
 license:            BSD3
@@ -7,7 +7,7 @@ license-file:       LICENSE
 author:             Jude Taylor
 maintainer:         me@jude.xyz
 tested-with:        GHC == 7.4.2, GHC == 7.6.3, GHC == 7.8.4, GHC == 7.10.3, GHC == 8.0.2,
-                    GHC == 8.2.2
+                    GHC == 8.2.2, GHC == 8.4.1, GHC == 8.5.*
 category:           Language
 build-type:         Simple
 extra-source-files: ChangeLog.md
@@ -46,12 +46,13 @@ library
                       Types.Field
   hs-source-dirs:     src
   build-depends:      base            == 4.*
-                    , Cabal           == 2.0.*
+                    , Cabal           == 2.2.*
                     , ansi-wl-pprint
                     , base-compat
                     , data-default
                     , deepseq
-                    , haddock-library
+                    , haddock-library == 1.5.*
+                    , microlens
                     , mtl
                     , split
   default-language:   Haskell2010
@@ -78,12 +79,12 @@ library test-utils
                     , haddock-library
                     , hspec
                     , hspec-core
-                    , hspec-expectations-pretty-diff
                     , microlens
                     , microlens-th
                     , split
                     , stylish-cabal
                     , template-haskell
+                    , utf8-string
   default-language:   Haskell2010
   default-extensions: NoImplicitPrelude
   ghc-options:        -Wall -fno-warn-missing-signatures
@@ -93,7 +94,7 @@ library test-utils
 
 executable stylish-cabal
   main-is:            Main.hs
-  build-depends:      base, base-compat, optparse-applicative, stylish-cabal
+  build-depends:      base, base-compat, bytestring, optparse-applicative, stylish-cabal
   default-language:   Haskell2010
   default-extensions: NoImplicitPrelude
   ghc-options:        -Wall
@@ -132,7 +133,7 @@ test-suite roundtrip
   type:               exitcode-stdio-1.0
   main-is:            Main.hs
   hs-source-dirs:     tests/roundtrip
-  build-depends:      base, base-compat, hspec, test-utils
+  build-depends:      base, base-compat, bytestring, hspec, test-utils
   default-language:   Haskell2010
   default-extensions: NoImplicitPrelude
   ghc-options:        -Wall -fno-warn-missing-signatures
@@ -147,6 +148,7 @@ test-suite roundtrip-hackage
   build-depends:      base
                     , aeson
                     , base-compat
+                    , bytestring
                     , hspec
                     , hspec-core
                     , lens

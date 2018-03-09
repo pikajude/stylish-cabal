@@ -2,9 +2,10 @@
 {-# Language FlexibleContexts #-}
 
 import Control.DeepSeq
+import qualified Data.ByteString as B
 import Distribution.PackageDescription
 import qualified Distribution.PackageDescription as C
-import Distribution.PackageDescription.Parse
+import Distribution.PackageDescription.Parsec
 import Instances ()
 import Prelude.Compat
 import Pretty
@@ -33,9 +34,10 @@ process gpd =
 main :: IO ()
 main =
     hspec $ do
-        ParseOk _ gpd <-
+        ([], Right gpd) <-
             runIO $
-            parseGenericPackageDescription <$> readFile "tests/cabal-files/example"
+            runParseResult . parseGenericPackageDescription <$>
+            B.readFile "tests/cabal-files/example.txt"
         describe "pretty" $
             it "should fully evaluate the package description" $ do
                 let expected = nf gpd
