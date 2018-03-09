@@ -15,7 +15,6 @@ module StylishCabal
     -- * Reexports
     , Default(..)
     , Doc
-    , renderDescription
     , plain
     , displayIO
     , displayS
