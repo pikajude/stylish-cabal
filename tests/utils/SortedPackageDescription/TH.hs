@@ -1,6 +1,7 @@
 {-# Language CPP #-}
 {-# Language NoMonomorphismRestriction #-}
 {-# Language TemplateHaskell #-}
+{-# Language ConstraintKinds #-}
 {-# Language UndecidableInstances #-}
 {-# Language FlexibleContexts #-}
 {-# Language FlexibleInstances #-}
@@ -10,7 +11,7 @@
 
 module SortedPackageDescription.TH where
 
-import Control.Monad
+import Control.Monad.Compat
 import Data.Char (toUpper)
 import MultiSet
 import Language.Haskell.TH

@@ -47,6 +47,14 @@ data Result a
 deriving instance Generic1 Result
 #endif
 
+#if !MIN_VERSION_base(4,8,0)
+deriving instance Typeable PError
+
+deriving instance Typeable Position
+
+deriving instance Typeable PWarnType
+#endif
+
 #if MIN_VERSION_base(4,9,0)
 instance Show1 Result where
     liftShowsPrec sp _ p (Success n) = showsUnaryWith sp "Success" p n
