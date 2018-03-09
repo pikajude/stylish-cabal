@@ -46,12 +46,12 @@ library
                       Types.Field
   hs-source-dirs:     src
   build-depends:      base            == 4.*
-                    , Cabal           == 2.2.*
+                    , Cabal           ^>= 2.2
                     , ansi-wl-pprint
                     , base-compat
                     , data-default
                     , deepseq
-                    , haddock-library == 1.5.*
+                    , haddock-library ^>= 1.5
                     , microlens
                     , mtl
                     , split
