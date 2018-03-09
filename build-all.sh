@@ -3,7 +3,7 @@
 set -e
 
 if [ "$#" -eq "0" ]; then
-  compilers=(ghc742 ghc763 ghc784 ghc7103 ghc802 ghc822)
+  compilers=(ghc742 ghc763 ghc784 ghc7103 ghc802 ghc822 ghc841)
 else
   compilers=($@)
 fi

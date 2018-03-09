@@ -1,13 +1,16 @@
 {-# Language CPP #-}
-{-# Language NoMonomorphismRestriction #-}
-{-# Language TemplateHaskell #-}
-{-# Language ConstraintKinds #-}
-{-# Language UndecidableInstances #-}
+{-# Language DefaultSignatures #-}
 {-# Language FlexibleContexts #-}
 {-# Language FlexibleInstances #-}
-{-# Language TypeSynonymInstances #-}
-{-# Language DefaultSignatures #-}
+{-# Language NoMonomorphismRestriction #-}
+{-# Language TemplateHaskell #-}
 {-# Language TypeFamilies #-}
+{-# Language TypeSynonymInstances #-}
+{-# Language UndecidableInstances #-}
+
+#if __GLASGOW_HASKELL__ < 706
+{-# LANGUAGE ConstraintKinds #-}
+#endif
 
 module SortedPackageDescription.TH where
 
