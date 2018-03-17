@@ -77,7 +77,7 @@ library test-utils
                     , base-compat
                     , containers
                     , haddock-library
-                    , hspec
+                    , hspec            < 2.5
                     , hspec-core
                     , microlens
                     , microlens-th
