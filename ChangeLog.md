@@ -31,3 +31,7 @@
 ## 0.4.0.0 -- 2018-03-08
 
 * Cabal 2.2 and GHC 8.4 support
+
+## 0.4.0.1 -- 2018-04-02
+
+* Fixed an overly optimistic upper bound on hspec's version
