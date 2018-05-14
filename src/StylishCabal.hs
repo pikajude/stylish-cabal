@@ -9,11 +9,14 @@ module StylishCabal
   , parsePackageDescription
   , readPackageDescription
   , Result(..)
+  , PError(..)
+  , PWarning(..)
   , result
   , printWarnings
   , displayError
   -- * Reexports
   , Default(..)
+  , GenericPackageDescription
   , Doc
   , plain
   , displayIO
@@ -23,6 +26,7 @@ module StylishCabal
 import Data.Default
 import Data.Monoid.Compat
 import Distribution.PackageDescription (GenericPackageDescription)
+import Distribution.Parsec.Common
 import Prelude.Compat
 import Text.PrettyPrint.ANSI.Leijen hiding ((<>), pretty)
 
