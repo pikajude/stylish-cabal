@@ -1,29 +1,30 @@
 -- | Cabal file formatter.
 module StylishCabal
-    ( -- * Formatting Cabal files
-      pretty
-    , prettyOpts
-    , RenderOptions(..)
-    , render
-      -- * Parsing utilities
-    , parsePackageDescription
-    , readPackageDescription
-    , Result(..)
-    , result
-    , printWarnings
-    , displayError
+  ( -- * Formatting Cabal files
+    pretty
+  , prettyOpts
+  , RenderOptions(..)
+  , render
+    -- * Parsing utilities
+  , parsePackageDescription
+  , readPackageDescription
+  , Result(..)
+  , result
+  , printWarnings
+  , displayError
     -- * Reexports
-    , Default(..)
-    , Doc
-    , plain
-    , displayIO
-    , displayS
-    ) where
+  , Default(..)
+  , Doc
+  , plain
+  , displayIO
+  , displayS
+  ) where
 
 import Data.Default
+import Data.Monoid.Compat
 import Distribution.PackageDescription (GenericPackageDescription)
 import Prelude.Compat
-import Text.PrettyPrint.ANSI.Leijen hiding (pretty)
+import Text.PrettyPrint.ANSI.Leijen hiding ((<>), pretty)
 
 import Parse
 import Render
@@ -40,7 +41,8 @@ pretty = prettyOpts def
 
 -- | 'pretty' with specified options.
 prettyOpts :: RenderOptions -> GenericPackageDescription -> Doc
-prettyOpts opts gpd = runReader (uncurry blockBodyToDoc $ toBlocks gpd) opts <> line
+prettyOpts opts gpd =
+  runReader (uncurry blockBodyToDoc $ toBlocks gpd) opts <> line
 
 -- | Render the given 'Doc' with the given width.
 render :: Int -> Doc -> SimpleDoc
