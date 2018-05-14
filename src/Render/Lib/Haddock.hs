@@ -29,8 +29,7 @@ data DocContext = DocContext
   , listContext :: Bool
   }
 
-flattenedBody =
-  withReader $ \d -> d {flattenBehavior = Flatten, textPosition = Body}
+flattenedBody = withReader $ \d -> d {flattenBehavior = Flatten, textPosition = Body}
 
 inPara = withReader $ \d -> d {textPosition = ParaStart}
 
@@ -44,8 +43,7 @@ defaultDocContext = DocContext WordBreak ParaStart False
 -- to change rendering logic entirely inside a code block (i.e. don't
 -- fillSep words).
 renderDescription =
-  vcat .
-  intersperse (green ".") . map ((`runReader` defaultDocContext) . go) . flatten
+  vcat . intersperse (green ".") . map ((`runReader` defaultDocContext) . go) . flatten
   where
     flatten (DocAppend d1 d2) = flatten d1 ++ flatten d2
     flatten d = [d]
@@ -53,10 +51,8 @@ renderDescription =
     -- across line boundaries
     go :: DocH () Identifier -> Reader DocContext Doc
     go DocEmpty = pure empty
-    go (DocEmphasis d) =
-      enclose (green "/") (green "/") <$> flattenedBody (go d)
-    go (DocMonospaced d) =
-      enclose (green "@") (green "@") <$> flattenedBody (go d)
+    go (DocEmphasis d) = enclose (green "/") (green "/") <$> flattenedBody (go d)
+    go (DocMonospaced d) = enclose (green "@") (green "@") <$> flattenedBody (go d)
     go (DocBold d) = enclose (green "__") (green "__") <$> flattenedBody (go d)
     go (DocHeader (Header l t)) =
       (green (strBody $ replicate l '=') <+>) <$> inBody (go t)
@@ -81,8 +77,7 @@ renderDescription =
           DocString s
             | all (`notElem` ['{', '}']) s && not listContext ->
               green ">" <+> arrowblock s
-            | listContext && notElem '\n' s ->
-              cat [green "@", string s, green "@"]
+            | listContext && notElem '\n' s -> cat [green "@", string s, green "@"]
           y -> vcat [green "@", goplain y <> green "@"]
     go (DocString s) = do
       DocContext {..} <- ask
@@ -110,29 +105,20 @@ renderDescription =
       vcat $
       map
         (\Example {..} ->
-           vcat $
-           (green ">>>" <+> string exampleExpression) : map string exampleResult)
+           vcat $ (green ">>>" <+> string exampleExpression) : map string exampleResult)
         es
     go (DocModule x) = return $ enclose (green "\"") (green "\"") (strBody x)
     go (DocIdentifier (c, x, c2)) =
       return $ enclose (green $ char c) (green $ char c2) (string x)
-    go (DocMathDisplay x) =
-      return $ enclose (green "\\[") (green "\\]") (strBody x)
-    go (DocMathInline x) =
-      return $ enclose (green "\\(") (green "\\)") (strBody x)
+    go (DocMathDisplay x) = return $ enclose (green "\\[") (green "\\]") (strBody x)
+    go (DocMathInline x) = return $ enclose (green "\\(") (green "\\)") (strBody x)
     -- go (DocAName x) = return $ enclose (green "#") (green "#") (strBody x)
     go (DocHyperlink (Hyperlink h l)) =
       return $
-      enclose
-        (green "<")
-        (green ">")
-        (string $ h ++ maybe "" (" " ++) (unNl <$> l))
+      enclose (green "<") (green ">") (string $ h ++ maybe "" (" " ++) (unNl <$> l))
     go (DocPic (Picture p t)) =
       return $
-      enclose
-        (green "<<")
-        (green ">>")
-        (string $ p ++ maybe "" (" " ++) (unNl <$> t))
+      enclose (green "<<") (green ">>") (string $ p ++ maybe "" (" " ++) (unNl <$> t))
     go x = error $ "Unhandled Haddock AST node: " ++ show x
     unNl =
       map
@@ -158,8 +144,7 @@ arrowblock "" = empty
 escapeHtml "" = ""
 escapeHtml ('\n':'\n':xs) = '\n' : '.' : '\n' : escapeHtml xs
 escapeHtml ('\n':xs)
-  | (spcs, '-':chrs) <- span isSpace xs =
-    '\n' : spcs ++ ('\1' : '-' : escapeHtml chrs)
+  | (spcs, '-':chrs) <- span isSpace xs = '\n' : spcs ++ ('\1' : '-' : escapeHtml chrs)
 escapeHtml (c:cs) = c : escapeHtml cs
 
 strPara ('>':'>':'>':cs) = text "\\>>>" <> strBody cs

@@ -30,14 +30,11 @@ import Types.Field
 toBlocks GenericPackageDescription {..} =
   ( pdToFields packageDescription
   , concat
-      [ map setupBuildInfoToBlock $
-        maybeToList (setupBuildInfo packageDescription)
+      [ map setupBuildInfoToBlock $ maybeToList (setupBuildInfo packageDescription)
       , map sourceRepoToBlock (sourceRepos packageDescription)
       , map flagToBlock genPackageFlags
       , map (libToBlock packageDescription Nothing) $ maybeToList condLibrary
-      , map
-          (uncurry (libToBlock packageDescription) . first Just)
-          condSubLibraries
+      , map (uncurry (libToBlock packageDescription) . first Just) condSubLibraries
       , map (uncurry $ foreignLibToBlock packageDescription) condForeignLibs
       , map (uncurry $ exeToBlock packageDescription) condExecutables
       , map (uncurry $ testToBlock packageDescription) condTestSuites
@@ -114,8 +111,7 @@ libToBlock pkg libname CondNode {..} =
   deepseq condTreeConstraints $
   Block
     (Library_ $ unUnqualComponentName <$> libname)
-    (libDataToFields condTreeData ++
-     buildInfoToFields pkg (libBuildInfo condTreeData))
+    (libDataToFields condTreeData ++ buildInfoToFields pkg (libBuildInfo condTreeData))
     (nodesToBlocks pkg libBuildInfo libDataToFields condTreeComponents)
 
 libDataToFields Library {..} =
@@ -132,11 +128,7 @@ foreignLibToBlock pkg libname CondNode {..} =
     (ForeignLib_ $ unUnqualComponentName libname)
     (foreignLibDataToFields condTreeData ++
      buildInfoToFields pkg (foreignLibBuildInfo condTreeData))
-    (nodesToBlocks
-       pkg
-       foreignLibBuildInfo
-       foreignLibDataToFields
-       condTreeComponents)
+    (nodesToBlocks pkg foreignLibBuildInfo foreignLibDataToFields condTreeComponents)
 
 foreignLibDataToFields ForeignLib {..} =
   foreignLibName `seq`
@@ -155,25 +147,20 @@ exeToBlock pkg exeName CondNode {..} =
   deepseq condTreeConstraints $
   Block
     (Exe_ (unUnqualComponentName exeName))
-    (exeDataToFields condTreeData ++
-     buildInfoToFields pkg (buildInfo condTreeData))
+    (exeDataToFields condTreeData ++ buildInfoToFields pkg (buildInfo condTreeData))
     (nodesToBlocks pkg buildInfo exeDataToFields condTreeComponents)
 
 exeDataToFields Executable {..} =
   exeName `seq`
   [ nonEmpty (stringField "main-is") modulePath
-  , ffilter
-      (== ExecutablePrivate)
-      (\_ -> stringField "scope" "private")
-      exeScope
+  , ffilter (== ExecutablePrivate) (\_ -> stringField "scope" "private") exeScope
   ]
 
 testToBlock pkg testName CondNode {..} =
   deepseq condTreeConstraints $
   Block
     (TestSuite_ (unUnqualComponentName testName))
-    (testDataToFields condTreeData ++
-     buildInfoToFields pkg (testBuildInfo condTreeData))
+    (testDataToFields condTreeData ++ buildInfoToFields pkg (testBuildInfo condTreeData))
     (nodesToBlocks pkg testBuildInfo testDataToFields condTreeComponents)
 
 testDataToFields TestSuite {..} =
@@ -261,10 +248,8 @@ buildInfoToFields _ BuildInfo {..} =
   ] ++
   map (optionToField "") options ++
   map (optionToField "-prof") profOptions ++
-  map (optionToField "-shared") sharedOptions ++
-  map (uncurry stringField) customFieldsBI
+  map (optionToField "-shared") sharedOptions ++ map (uncurry stringField) customFieldsBI
   where
     (oldTools, newTools) = (buildTools, buildToolDepends)
 
-optionToField pref (f, args) =
-  spaces (map toLower (show f) ++ pref ++ "-options") args
+optionToField pref (f, args) = spaces (map toLower (show f) ++ pref ++ "-options") args

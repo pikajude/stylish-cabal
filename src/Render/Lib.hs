@@ -66,15 +66,11 @@ showVersionRange r = do
     fold' AnyVersionF = empty
     fold' (ThisVersionF v) = green "==" <+> dullyellow (string (prettyShow v))
     fold' (LaterVersionF v) = green ">" <+> dullyellow (string (prettyShow v))
-    fold' (OrLaterVersionF v) =
-      green ">=" <+> dullyellow (string (prettyShow v))
+    fold' (OrLaterVersionF v) = green ">=" <+> dullyellow (string (prettyShow v))
     fold' (EarlierVersionF v) = green "<" <+> dullyellow (string (prettyShow v))
-    fold' (OrEarlierVersionF v) =
-      green "<=" <+> dullyellow (string (prettyShow v))
-    fold' (WildcardVersionF v) =
-      green "==" <+> dullyellow (string (prettyShow v) <> ".*")
-    fold' (MajorBoundVersionF v) =
-      green "^>=" <+> dullyellow (string (prettyShow v))
+    fold' (OrEarlierVersionF v) = green "<=" <+> dullyellow (string (prettyShow v))
+    fold' (WildcardVersionF v) = green "==" <+> dullyellow (string (prettyShow v) <> ".*")
+    fold' (MajorBoundVersionF v) = green "^>=" <+> dullyellow (string (prettyShow v))
     fold' (UnionVersionRangesF a b) = a <+> green "||" <+> b
     fold' (IntersectVersionRangesF a b) = a <+> green "&&" <+> b
     fold' (VersionRangeParensF a) = parens a
@@ -119,15 +115,9 @@ showPredicate :: Condition ConfVar -> Render Doc
 showPredicate (Var x) = showVar x
 showPredicate (CNot p) = fmap (dullmagenta (string "!") <>) (maybeParens p)
 showPredicate (CAnd a b) =
-  liftM2
-    (\x y -> x <+> dullblue (string "&&") <+> y)
-    (maybeParens a)
-    (maybeParens b)
+  liftM2 (\x y -> x <+> dullblue (string "&&") <+> y) (maybeParens a) (maybeParens b)
 showPredicate (COr a b) =
-  liftM2
-    (\x y -> x <+> dullblue (string "||") <+> y)
-    (maybeParens a)
-    (maybeParens b)
+  liftM2 (\x y -> x <+> dullblue (string "||") <+> y) (maybeParens a) (maybeParens b)
 showPredicate (Lit b) = pure $ string $ show b
 
 maybeParens p =
@@ -144,8 +134,6 @@ showVar (Impl compiler vers) = do
 showVar (Flag f) =
   pure $ dullgreen $ string "flag" <> parens (dullblue $ string (unFlagName f))
 showVar (OS w) =
-  pure $
-  dullgreen $ string "os" <> parens (dullblue $ string $ map toLower $ show w)
+  pure $ dullgreen $ string "os" <> parens (dullblue $ string $ map toLower $ show w)
 showVar (Arch a) =
-  pure $
-  dullgreen $ string "arch" <> parens (dullblue $ string $ map toLower $ show a)
+  pure $ dullgreen $ string "arch" <> parens (dullblue $ string $ map toLower $ show a)

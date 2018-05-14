@@ -9,6 +9,7 @@ module Render
 
 import Data.List.Compat hiding (group)
 import Data.Maybe
+import Data.Monoid.Compat
 import Data.Ord
 import Distribution.Pretty
 import Distribution.Types.Dependency
@@ -22,9 +23,9 @@ import Distribution.Types.PkgconfigDependency
 import Distribution.Types.PkgconfigName
 import Distribution.Version
 import Documentation.Haddock.Types
-import Prelude.Compat hiding ((<$>), (<>))
+import Prelude.Compat hiding ((<$>))
 import qualified Prelude.Compat as P
-import Text.PrettyPrint.ANSI.Leijen
+import Text.PrettyPrint.ANSI.Leijen hiding ((<>))
 
 import Render.Lib
 import Render.Options
@@ -36,19 +37,16 @@ deriving instance Ord ModuleReexport
 fieldValueToDoc k (Field _ f) =
   case f of
     Dependencies ds ->
-      buildDepsToDoc k $
-      map (\(Dependency pn v) -> (P $ unPackageName pn, v)) ds
+      buildDepsToDoc k $ map (\(Dependency pn v) -> (P $ unPackageName pn, v)) ds
     ToolDepends ts -> buildDepsToDoc k $ map exeDependencyAsDependency ts
     OldToolDepends ds ->
       buildDepsToDoc k $ map (\(LegacyExeDependency pn v) -> (P pn, v)) ds
     PcDepends ds ->
       buildDepsToDoc k $
       map (\(PkgconfigDependency pn v) -> (P $ unPkgconfigName pn, v)) ds
-    Mixins ms ->
-      mixinsToDoc k $ map (\(Mixin pn r) -> (P $ unPackageName pn, r)) ms
+    Mixins ms -> mixinsToDoc k $ map (\(Mixin pn r) -> (P $ unPackageName pn, r)) ms
     RexpModules rms ->
-      buildDepsToDoc k $
-      map (\rexp -> (P $ show $ rexpModuleDoc rexp, anyVersion)) rms
+      buildDepsToDoc k $ map (\rexp -> (P $ show $ rexpModuleDoc rexp, anyVersion)) rms
     n -> val' n <&> \v -> colon <> indent (k + 1) (align v)
   where
     val' (Str x) = pure $ string x
@@ -91,8 +89,7 @@ mixinsToDoc k bs
       encloseSep (string lsep) empty (string ", ") $
       map showField $ sortBy (comparing fst) bs
     longest = maximum $ map (length . unP . fst) bs
-    hasRequires =
-      any (\(_, c) -> not (isDefaultRenaming $ includeRequiresRn c)) bs
+    hasRequires = any (\(_, c) -> not (isDefaultRenaming $ includeRequiresRn c)) bs
     showField (P fName, i@IncludeRenaming {..})
       | isDefaultIncludeRenaming i = string fName
       | otherwise =
@@ -119,8 +116,7 @@ mixinsToDoc k bs
         (flatAlt (line <> rparen) rparen)
         (string ", ")
     providesDoc (ModuleRenaming ms) = parenthesize $ map renaming ms
-    providesDoc (HidingRenaming hs) =
-      string "hiding" <+> parenthesize (map moduleDoc hs)
+    providesDoc (HidingRenaming hs) = string "hiding" <+> parenthesize (map moduleDoc hs)
     providesDoc DefaultRenaming = empty
     renaming (m1, m2) = moduleDoc m1 <+> string "as" <+> moduleDoc m2
     align' n doc = column (\ko -> nesting (\i -> nest (ko - i - n) doc))

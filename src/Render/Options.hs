@@ -18,11 +18,11 @@ type Render = Reader RenderOptions
 
 data RenderOptions = RenderOptions
   { -- | Number of spaces to use for indentation.
-    indentSize :: Int
-    -- | If 'True', @stylish-cabal@ will use
-    -- 'Distribution.Version.simplifyVersionRange' to simplify every
-    -- version range present in the Cabal file. For example, it'll turn
-    -- a constraint like @>= 3.0 && <= 3.0@ into just @== 3.0@.
+  indentSize :: Int
+  -- | If 'True', @stylish-cabal@ will use
+  -- 'Distribution.Version.simplifyVersionRange' to simplify every
+  -- version range present in the Cabal file. For example, it'll turn
+  -- a constraint like @>= 3.0 && <= 3.0@ into just @== 3.0@.
   , simplifyVersions :: Bool
   } deriving (Show, Eq, Generic, Typeable, Data)
 

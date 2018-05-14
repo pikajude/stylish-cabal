@@ -5,14 +5,14 @@ module StylishCabal
   , prettyOpts
   , RenderOptions(..)
   , render
-    -- * Parsing utilities
+  -- * Parsing utilities
   , parsePackageDescription
   , readPackageDescription
   , Result(..)
   , result
   , printWarnings
   , displayError
-    -- * Reexports
+  -- * Reexports
   , Default(..)
   , Doc
   , plain
@@ -41,8 +41,7 @@ pretty = prettyOpts def
 
 -- | 'pretty' with specified options.
 prettyOpts :: RenderOptions -> GenericPackageDescription -> Doc
-prettyOpts opts gpd =
-  runReader (uncurry blockBodyToDoc $ toBlocks gpd) opts <> line
+prettyOpts opts gpd = runReader (uncurry blockBodyToDoc $ toBlocks gpd) opts <> line
 
 -- | Render the given 'Doc' with the given width.
 render :: Int -> Doc -> SimpleDoc
