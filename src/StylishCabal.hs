@@ -1,52 +1,21 @@
--- | Cabal file formatter.
-module StylishCabal
-  ( -- * Formatting Cabal files
-    pretty
-  , prettyOpts
-  , RenderOptions(..)
-  , render
-  -- * Parsing utilities
-  , parsePackageDescription
-  , readPackageDescription
-  , Result(..)
-  , PError(..)
-  , PWarning(..)
-  , result
-  , printWarnings
-  , displayError
-  -- * Reexports
-  , Default(..)
-  , GenericPackageDescription
-  , Doc
-  , plain
-  , displayIO
-  , displayS
-  ) where
+module StylishCabal where
 
-import Data.Default
-import Data.Monoid.Compat
-import Distribution.PackageDescription (GenericPackageDescription)
-import Distribution.Parsec.Common
-import Prelude.Compat
-import Text.PrettyPrint.ANSI.Leijen hiding ((<>), pretty)
-
+import Control.Monad.Except
+import Control.Monad.Reader
+import qualified Data.ByteString as B
+import Data.Functor.Identity
+import Distribution.CabalSpecVersion
 import Parse
-import Render
-import Render.Options
-import Transform
+import Pretty
+import System.Exit
+import System.IO
+import Text.PrettyPrint.ANSI.Leijen
 
--- | @pretty pkg@ produces a colorized, formatted textual representation of
--- a given 'Distribution.PackageDescription.GenericPackageDescription',
--- using 'Default' options.
---
--- To remove syntax highlighting, you can use 'plain'.
-pretty :: GenericPackageDescription -> Doc
-pretty = prettyOpts def
-
--- | 'pretty' with specified options.
-prettyOpts :: RenderOptions -> GenericPackageDescription -> Doc
-prettyOpts opts gpd = runReader (uncurry blockBodyToDoc $ toBlocks gpd) opts <> line
-
--- | Render the given 'Doc' with the given width.
-render :: Int -> Doc -> SimpleDoc
-render = renderSmart 1.0
+prettyPrintFile f = do
+    b <- B.readFile f
+    parsed' <- runExceptT (parseCabalFile b)
+    let parsed = either (error . show) id parsed'
+    either
+        (die . show)
+        (displayIO stdout . renderPretty 1.0 90)
+        (runIdentity $ runExceptT $ runReaderT (pprFields parsed) CabalSpecV1_24)
