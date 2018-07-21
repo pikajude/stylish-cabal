@@ -1,5 +1,4 @@
 cabal-version:      2.2
--- this is the package name
 name:               stylish-cabal
 version:            0.5.0.0
 synopsis:           Format Cabal files
@@ -15,18 +14,27 @@ build-type:         Simple
 extra-source-files: ChangeLog.md
 
 common default-flags
-  ghc-options: -Wall -Wcompat -threaded
+  ghc-options: -Wall -Wcompat
+  default-extensions: NoMonomorphismRestriction
   default-language: Haskell2010
 
 library
   import: default-flags
-  exposed-modules:    Parse, Pretty, StylishCabal
+  exposed-modules:    Parse Pretty StylishCabal Stylish.Class Stylish.Monad Comment
   hs-source-dirs:     src
   build-depends:      base            == 4.*
                     , Cabal           ^>= 2.3
                     , ansi-wl-pprint
-                    -- we need bytestring because it's a dependency
+                    -- a comment in a build-depends? nani??
                     , bytestring
                     , mtl
                     , utf8-string
                     , parsec
+
+test-suite parser
+  import: default-flags
+  ghc-options: -threaded
+  main-is: parser.hs
+  type: exitcode-stdio-1.0
+  build-depends: base, Cabal, hspec, ansi-wl-pprint, stylish-cabal, HUnit, hspec-expectations-pretty-diff
+  hs-source-dirs: tests

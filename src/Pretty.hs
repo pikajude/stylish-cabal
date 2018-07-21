@@ -4,6 +4,7 @@
 module Pretty where
 
 import Comment
+import Control.Monad.State
 import qualified Data.ByteString as B
 import Data.ByteString.UTF8 (toString)
 import Data.Functor.Identity
@@ -19,13 +20,15 @@ import Distribution.Pretty
 import Distribution.Types.BuildType (BuildType)
 import Distribution.Types.Dependency (Dependency)
 import Distribution.Types.PackageName
+import Distribution.Types.SourceRepo
 import Distribution.Types.TestType
 import Distribution.Version
 import Language.Haskell.Extension (Extension, Language)
 import Parse
 import Parse.Fields
 import Prelude hiding ((<$>))
-import Pretty.Class
+import Stylish.Class
+import Stylish.Monad
 import Text.Parsec.Error
 import Text.PrettyPrint.ANSI.Leijen hiding (Pretty, pretty)
 
@@ -42,10 +45,12 @@ docFields fs =
              case f of
                  CommentLine _ b -> pure $ yellow $ bs $ stripComment b
                  Section (Name _ n) args fs -> do
+                     setSectionName n
                      fs' <- docFields fs
+                     clearSectionName
                      return $
-                         dullblue (bs n) <+> hcat (map docArg args) <$>
-                         ("  " <> align fs')
+                         dullyellow (bs n) <+> hcat (map docArg args) <$>
+                         ("  " <> align fs') <> hardline
                  Field n fls -> showField n (n, fls))
         fs
   where
@@ -57,12 +62,12 @@ docFields fs =
             "name" -> fieldPrinter (Proxy @PackageName) longest
             "version" -> fieldPrinter (Proxy @Version) longest
             "synopsis" -> fieldPrinter (Proxy @FreeText) longest
-            "copyright" -> fieldPrinter (Proxy @FreeText) longest
-            "homepage" -> fieldPrinter (Proxy @FreeText) longest
-            "bug-reports" -> fieldPrinter (Proxy @FreeText) longest
             "description" -> fieldPrinter (Proxy @FreeText) longest
             "license" -> fieldPrinter (Proxy @SpecLicense) longest
             "license-file" -> fieldPrinter (Proxy @(List FSep FilePathNT _)) longest
+            "copyright" -> fieldPrinter (Proxy @FreeText) longest
+            "homepage" -> fieldPrinter (Proxy @FreeText) longest
+            "bug-reports" -> fieldPrinter (Proxy @FreeText) longest
             "author" -> fieldPrinter (Proxy @FreeText) longest
             "maintainer" -> fieldPrinter (Proxy @FreeText) longest
             "location" -> fieldPrinter (Proxy @FreeText) longest
@@ -79,12 +84,23 @@ docFields fs =
             "default" -> fieldPrinter (Proxy @Bool) longest
             "manual" -> fieldPrinter (Proxy @Bool) longest
             "extra-libraries" -> fieldPrinter (Proxy @(List VCat Token _)) longest
-            -- "type" -> fieldPrinter (Proxy @TestType) longest
+            "type" ->
+                \fls -> do
+                    sec <- get
+                    case sec of
+                        Just "test-suite" -> fieldPrinter (Proxy @TestType) longest fls
+                        Just "source-repository" ->
+                            fieldPrinter (Proxy @RepoType) longest fls
+                        Just x -> error $ "unknown section " ++ show x
             "import" -> fieldPrinter (Proxy @Token') longest
             "exposed-modules" ->
                 fieldPrinter (Proxy @(List VCat (MQuoted ModuleName) _)) longest
             "other-modules" ->
                 fieldPrinter (Proxy @(List VCat (MQuoted ModuleName) _)) longest
+            "default-extensions" ->
+                fieldPrinter (Proxy @(List FSep (MQuoted Extension) _)) longest
+            "other-extensions" ->
+                fieldPrinter (Proxy @(List FSep (MQuoted Extension) _)) longest
             "hs-source-dirs" -> fieldPrinter (Proxy @(List FSep FilePathNT _)) longest
             "build-depends" ->
                 fieldPrinter (Proxy @(List CommaVCat (Identity Dependency) _)) longest
