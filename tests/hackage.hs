@@ -6,9 +6,9 @@ import Distribution.PackageDescription.Parsec
 import Distribution.Parsec.ParseResult
 import Distribution.Verbosity
 import StylishCabal
+import System.IO
 import Test.HUnit
-import Test.Hspec hiding (expectationFailure, shouldBe)
-import Test.Hspec.Expectations.Pretty
+import Test.Hspec
 import Text.PrettyPrint.ANSI.Leijen
 
 testFile filepath =
@@ -18,7 +18,9 @@ testFile filepath =
         case runParseResult $
              parseGenericPackageDescription (fromString $ displayS (plain' gpdDoc) "") of
             (_, Right y) -> y `shouldBe` gpd1
-            x -> expectationFailure $ "no parse " ++ show x
+            x -> do
+                hPrint stderr x
+                expectationFailure "no parse"
 
 main =
     hspec $ do

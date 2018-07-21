@@ -31,10 +31,10 @@ library
                     , utf8-string
                     , parsec
 
-test-suite parser
+test-suite hackage
   import: default-flags
   ghc-options: -threaded
-  main-is: parser.hs
+  main-is: hackage.hs
   type: exitcode-stdio-1.0
-  build-depends: base, Cabal, hspec, ansi-wl-pprint, stylish-cabal, HUnit, hspec-expectations-pretty-diff
+  build-depends: base, Cabal, hspec, ansi-wl-pprint, stylish-cabal, HUnit, tar, tree-diff
   hs-source-dirs: tests
