@@ -11,6 +11,7 @@ import qualified Data.ByteString as B
 import Data.List.NonEmpty (NonEmpty(..), nonEmpty)
 import Data.Maybe
 import Data.Semigroup ((<>))
+import Debug.Trace
 import Distribution.CabalSpecVersion
 import qualified Distribution.Compat.CharParsing as P
 import Distribution.PackageDescription.Parsec
@@ -22,14 +23,25 @@ import Distribution.Types.GenericPackageDescription
 import Distribution.Types.PackageDescription
 import Distribution.Utils.Generic
 import Distribution.Version
+import Lens.Micro
+import Stylish.Monad
 import Text.Parsec (runParser)
 import Text.Parsec.Error
 
 parseCabalFile str = do
     case runParseResult $ parseGenericPackageDescription str of
-        ([], Right (GenericPackageDescription {packageDescription})) ->
-            let Right x = readFields str
-                cabalVer = specVersion packageDescription
+        (_, Right (GenericPackageDescription {packageDescription})) -> do
+            x <-
+                liftEither $
+                left (ParseError . (,) Nothing) $
+                readFields $
+                B.map
+                    (\x ->
+                         if x == 127
+                             then 32
+                             else x)
+                    str
+            let cabalVer = specVersion packageDescription
                 specVer
                     | cabalVer >= mkVersion [2, 3] = CabalSpecV2_4
                     | cabalVer >= mkVersion [2, 1] = CabalSpecV2_2
@@ -37,50 +49,58 @@ parseCabalFile str = do
                     | cabalVer >= mkVersion [1, 23] = CabalSpecV1_24
                     | cabalVer >= mkVersion [1, 21] = CabalSpecV1_22
                     | otherwise = CabalSpecOld
-             in pure (specVer, x)
-        y -> throwError $ show y
+            pure (specVer, x)
+        y -> throwError $ MiscError $ show y
 
 -- list of FieldLines -> list of (Maybe "associated comment", "field content")
-groupLines :: Show ann => [FieldLine ann] -> [(Maybe [B.ByteString], B.ByteString)]
-groupLines [] = []
-groupLines fc =
+groupLines ::
+       Show ann => Bool -> [FieldLine ann] -> [(Maybe [B.ByteString], FieldLineStream)]
+groupLines _ [] = []
+groupLines stripCommas fc =
     case spanMaybe isComment fc of
         (comms, fs) ->
             let (plainfields, rest) = spanMaybe isLine fs
-             in (guard (not $ null comms) >> Just comms, B.intercalate "\n" plainfields) :
-                groupLines rest
+             in ( guard (not $ null comms) >> Just comms
+                , toLineStream $
+                  over _head stripLeadingComma $
+                  over _last stripTrailingComma $ plainfields) :
+                groupLines stripCommas rest
   where
+    stripLeadingComma
+        | stripCommas = unComma
+        | otherwise = B.dropWhile (== 32)
+    stripTrailingComma
+        | stripCommas = B.reverse . unComma . B.reverse
+        | otherwise = B.reverse . B.dropWhile (== 32) . B.reverse
+    toLineStream [x] = FLSLast x
+    toLineStream (x:xs) = FLSCons x (toLineStream xs)
+    toLineStream [] = FLSLast ""
     isComment (FieldComment _ b) = Just $ stripComment b
     isComment _ = Nothing
     isLine (FieldLine _ b) = Just b
     isLine _ = Nothing
 
-buildDepsField =
-    [ FieldLine (Position 25 23) "base            == 4.*"
-    , FieldLine (Position 26 21) ", Cabal           ^>= 2.3"
-    , FieldLine (Position 27 21) ", ansi-wl-pprint"
-    , FieldComment
-          (Position 28 1)
-          "                    -- a comment in a build-depends? nani??"
-    , FieldLine (Position 29 21) ", bytestring"
-    , FieldLine (Position 30 21) ", mtl"
-    , FieldLine (Position 31 21) ", utf8-string"
-    , FieldLine (Position 32 21) ", parsec"
-    ]
-
 runParsec ::
        Show ann
-    => ParsecParser a
+    => Bool
+    -> ParsecParser a
     -> CabalSpecVersion
     -> [FieldLine ann]
-    -> Either ParseError [Commented a]
-runParsec p spec fls = sequence $ map parse pairs
+    -> Either (FieldLineStream, ParseError) [Commented a]
+runParsec stripComma p spec fls = sequence $ map parse pairs
     -- fmap (nonEmpty . catNots) $ sequence $ zipWith (maybeParse p) [0 ..] chunks
   where
-    pairs = groupLines fls
+    pairs = groupLines stripComma fls
     parse (xs, y) =
-        case runParser (unPP p spec <* P.eof) [] "<input file>" (FLSLast y) of
-            Left err -> Left err
+        case runParser (unPP p spec <* P.eof) [] "<input file>" y of
+            Left err -> Left (y, err)
             Right y' -> Right $ MkCommented xs y'
 
 stripComment = B.dropWhile (== 32)
+
+-- strip a leading or trailing comma from a CommaVSep list
+-- we parse each section of the list separately because we have no other option, but
+-- leading or trailing commas will screw up the parser
+unComma = strip
+  where
+    strip = B.dropWhile (== 32) . B.dropWhile (== 44) . B.dropWhile (== 32)

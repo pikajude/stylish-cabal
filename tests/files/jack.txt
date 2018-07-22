@@ -1,0 +1,33 @@
+Name:               jack
+Version:            0.5
+License:            GPL
+License-File:       LICENSE
+Author:             Soenke Hahn
+Maintainer:         Henning Thielemann <haskell@henning-thielemann.de>
+Homepage:           http://open-projects.net/~shahn/index.php?seite=code
+Repository:         http://darcs.haskell.org/jack/
+Category:           Sound
+-- base package version needed for unsafeForeignPtrToStorableArray,
+-- base-2.1.1 is shipped with GHC-6.6
+-- in base-1.0 (GHC-6.4) this function is missing
+Build-Type:         Custom
+Build-Depends:      base>=2.1
+Synopsis:           Bindings for the JACK Audio Connection Kit
+Description:        Very basic bindings for the JACK Audio Connection Kit
+Hs-Source-Dirs:     src
+Exposed-Modules:    Sound.JACK
+Other-Modules:      Sound.JACK.FFI
+Tested-With:        GHC==6.6
+ghc-options:        -Wall -threaded
+Extensions:         ForeignFunctionInterface
+Extra-Libraries:    jack
+Includes:           jack/jack.h
+Include-Dirs:       /usr/local/include, /usr/include
+Extra-Source-Files: README, INSTALL
+
+Executable: amplify
+GHC-Options:        -Wall -threaded
+Extensions:         ForeignFunctionInterface
+Extra-Libraries:    jack
+Hs-Source-Dirs:     src, .
+Main-Is: examples/Amplify.hs

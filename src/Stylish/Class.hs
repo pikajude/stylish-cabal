@@ -14,6 +14,7 @@ import qualified Data.ByteString as B
 import Data.ByteString.UTF8 (toString)
 import Data.Coerce
 import Data.Functor.Identity
+import qualified Data.List as L
 import Data.List.NonEmpty (NonEmpty(..))
 import qualified Data.List.NonEmpty as N
 import Data.Proxy
@@ -24,8 +25,10 @@ import Distribution.Parsec.Class
 import Distribution.Parsec.Field
 import Distribution.Parsec.Newtypes
 import Distribution.Pretty
+import Distribution.Types.BenchmarkType
 import Distribution.Types.BuildType (BuildType)
 import Distribution.Types.Dependency
+import Distribution.Types.LegacyExeDependency
 import Distribution.Types.PackageName
 import Distribution.Types.SourceRepo
 import Distribution.Types.TestType
@@ -50,6 +53,10 @@ class Stylish a where
     default stylishField :: Pretty a =>
         Int -> Bool -> Commented a -> Doc
     stylishField = defaultStylish (string . show . pretty)
+    regroup :: [Commented a] -> [Commented a]
+    regroup = id
+    stripComma :: proxy a -> Bool
+    stripComma _ = False
 
 defaultStylish f n True (MkCommented (Just comms) x) =
     hcat
@@ -59,7 +66,7 @@ defaultStylish f n True (MkCommented (Just comms) x) =
         , defaultStylish f n False (MkCommented Nothing x)
         ]
 defaultStylish f n _ (MkCommented (Just comms) x) =
-    vcat [alignTo n $ vcat $ map (yellow . bs) comms, f x]
+    hcat [alignTo n $ vcat $ map (yellow . bs) comms, hardline, f x]
 defaultStylish f n _ (MkCommented Nothing x) = f x
 
 instance Stylish SpecVersion
@@ -69,7 +76,10 @@ instance Stylish PackageName
 instance Stylish Version
 
 instance Stylish FreeText where
-    stylishField n = defaultStylish (alignTo n . string . show . pretty) n
+    stylishField n =
+        defaultStylish
+            (alignTo n . hcat . punctuate hardline . map string . lines . show . pretty)
+            n
 
 instance Stylish TestType
 
@@ -93,26 +103,43 @@ instance (Parsec a, Stylish a) => Stylish (Identity a) where
 
 instance Stylish Token'
 
+instance Stylish Token
+
 instance Stylish Bool
 
 instance Stylish Dependency
+
+instance Stylish LegacyExeDependency
+
+instance Stylish BenchmarkType
 
 instance Stylish RepoType
 
 instance Stylish ModuleName
 
 instance (Pretty b, Parsec b, Newtype b x, Stylish b) => Stylish (List FSep b x) where
+    stripComma _ = True
     stylishField n = stylishList (alignTo n . fillSep) (\_ _ -> string . show . pretty) n
 
 instance (Pretty b, Parsec b, Newtype b x, Stylish b) =>
          Stylish (List NoCommaFSep b x) where
+    stripComma _ = True
     stylishField n = stylishList (alignTo n . fillSep) (\_ _ -> string . show . pretty) n
 
 instance (Parsec b, Newtype b x, Pretty b) => Stylish (List VCat b x) where
+    stripComma _ = True
     stylishField n = stylishList (alignTo n . vsep) (\n _ -> string . show . pretty) n
 
 instance (Parsec b, Newtype b x, Pretty b) => Stylish (List CommaVCat b x) where
+    stripComma _ = True
     stylishField = stylishList vcat maybeComma
+      where
+        maybeComma n True c = alignTo n $ string (show $ pretty c)
+        maybeComma n False c = alignTo (n - 2) $ "," <+> string (show $ pretty c)
+
+instance (Parsec b, Newtype b x, Pretty b) => Stylish (List CommaFSep b x) where
+    stripComma _ = True
+    stylishField = stylishList fillSep maybeComma
       where
         maybeComma n True c = alignTo n $ string (show $ pretty c)
         maybeComma n False c = alignTo (n - 2) $ "," <+> string (show $ pretty c)
@@ -144,14 +171,13 @@ fieldPrinter ::
 fieldPrinter _ width (Name _ n, fvs) = do
     spec <- ask
     ls' <-
-        liftEither $ left ParseError $ runParsec (parseValue (Proxy :: Proxy b)) spec fvs
+        liftEither $
+        left (\(a, b) -> ParseError (Just a, b)) $
+        runParsec (stripComma (Proxy :: Proxy b)) (parseValue (Proxy :: Proxy b)) spec fvs
     return $
         leftJustify (dullblue (bs n) <> colon) (width + 1) ' ' <+>
-        column (\k' -> cat (zipWith (stylishField k') (True : repeat False) ls'))
-  -- where
-  --   show' n b (NotComment x) = cat $ map (stylishField n b) (N.toList x)
-  --   show' n True (MkComment b) = hardline <> alignTo n (yellow $ bs b)
-  --   show' n _ (MkComment b) = alignTo n $ yellow $ bs b
+        column
+            (\k' -> cat (zipWith (stylishField k') (True : repeat False) (regroup ls')))
 
 leftJustify d len chr = width d $ \n -> string (replicate (len - n) chr)
 

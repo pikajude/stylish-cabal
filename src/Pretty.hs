@@ -17,9 +17,12 @@ import Distribution.Parsec.Class
 import Distribution.Parsec.Field
 import Distribution.Parsec.Newtypes
 import Distribution.Pretty
+import Distribution.Types.BenchmarkType
 import Distribution.Types.BuildType (BuildType)
 import Distribution.Types.Dependency (Dependency)
+import Distribution.Types.LegacyExeDependency
 import Distribution.Types.PackageName
+import Distribution.Types.PkgconfigDependency
 import Distribution.Types.SourceRepo
 import Distribution.Types.TestType
 import Distribution.Version
@@ -45,9 +48,9 @@ docFields fs =
              case f of
                  CommentLine _ b -> pure $ yellow $ bs $ stripComment b
                  Section (Name _ n) args fs -> do
-                     setSectionName n
+                     pushSectionName n
                      fs' <- docFields fs
-                     clearSectionName
+                     popSectionName
                      return $
                          dullyellow (bs n) <+> hcat (map docArg args) <$>
                          ("  " <> align fs') <> hardline
@@ -63,8 +66,10 @@ docFields fs =
             "version" -> fieldPrinter (Proxy @Version) longest
             "synopsis" -> fieldPrinter (Proxy @FreeText) longest
             "description" -> fieldPrinter (Proxy @FreeText) longest
+            "stability" -> fieldPrinter (Proxy @FreeText) longest
             "license" -> fieldPrinter (Proxy @SpecLicense) longest
             "license-file" -> fieldPrinter (Proxy @(List FSep FilePathNT _)) longest
+            "license-files" -> fieldPrinter (Proxy @(List FSep FilePathNT _)) longest
             "copyright" -> fieldPrinter (Proxy @FreeText) longest
             "homepage" -> fieldPrinter (Proxy @FreeText) longest
             "bug-reports" -> fieldPrinter (Proxy @FreeText) longest
@@ -73,12 +78,33 @@ docFields fs =
             "location" -> fieldPrinter (Proxy @FreeText) longest
             "tested-with" -> fieldPrinter (Proxy @(List FSep TestedWith _)) longest
             "category" -> fieldPrinter (Proxy @FreeText) longest
+            "package-url" -> fieldPrinter (Proxy @FreeText) longest
+            "repository" -> fieldPrinter (Proxy @FreeText) longest
             "build-type" -> fieldPrinter (Proxy @BuildType) longest
             "extra-source-files" -> fieldPrinter (Proxy @(List VCat FilePathNT _)) longest
+            "extra-doc-files" -> fieldPrinter (Proxy @(List VCat FilePathNT _)) longest
+            "extra-tmp-files" -> fieldPrinter (Proxy @(List VCat FilePathNT _)) longest
+            "include-dirs" -> fieldPrinter (Proxy @(List FSep FilePathNT _)) longest
+            "includes" -> fieldPrinter (Proxy @(List FSep FilePathNT _)) longest
+            "extra-lib-dirs" -> fieldPrinter (Proxy @(List FSep FilePathNT _)) longest
+            "install-includes" -> fieldPrinter (Proxy @(List FSep FilePathNT _)) longest
+            "data-files" -> fieldPrinter (Proxy @(List VCat FilePathNT _)) longest
+            "c-sources" -> fieldPrinter (Proxy @(List VCat FilePathNT _)) longest
             "ghc-options" -> fieldPrinter (Proxy @(List NoCommaFSep Token' _)) longest
+            "hugs-options" -> fieldPrinter (Proxy @(List NoCommaFSep Token' _)) longest
+            "nhc98-options" -> fieldPrinter (Proxy @(List NoCommaFSep Token' _)) longest
+            "jhc-options" -> fieldPrinter (Proxy @(List NoCommaFSep Token' _)) longest
+            "frameworks" -> fieldPrinter (Proxy @(List FSep Token _)) longest
+            "ghc-prof-options" ->
+                fieldPrinter (Proxy @(List NoCommaFSep Token' _)) longest
+            "ghc-shared-options" ->
+                fieldPrinter (Proxy @(List NoCommaFSep Token' _)) longest
             "cpp-options" -> fieldPrinter (Proxy @(List NoCommaFSep Token' _)) longest
+            "cc-options" -> fieldPrinter (Proxy @(List NoCommaFSep Token' _)) longest
+            "ld-options" -> fieldPrinter (Proxy @(List NoCommaFSep Token' _)) longest
             "default-language" -> fieldPrinter (Proxy @Language) longest
             "main-is" -> fieldPrinter (Proxy @FilePathNT) longest
+            "data-dir" -> fieldPrinter (Proxy @FilePathNT) longest
             "subdir" -> fieldPrinter (Proxy @FilePathNT) longest
             "buildable" -> fieldPrinter (Proxy @Bool) longest
             "default" -> fieldPrinter (Proxy @Bool) longest
@@ -87,25 +113,48 @@ docFields fs =
             "type" ->
                 \fls -> do
                     sec <- get
-                    case sec of
-                        Just "test-suite" -> fieldPrinter (Proxy @TestType) longest fls
-                        Just "source-repository" ->
-                            fieldPrinter (Proxy @RepoType) longest fls
-                        Just x -> error $ "unknown section " ++ show x
+                    let go s =
+                            case s of
+                                ("test-suite":_) ->
+                                    fieldPrinter (Proxy @TestType) longest fls
+                                ("source-repository":_) ->
+                                    fieldPrinter (Proxy @RepoType) longest fls
+                                ("benchmark":_) ->
+                                    fieldPrinter (Proxy @BenchmarkType) longest fls
+                                -- invalid section nesting, but some hackage packages do it
+                                ("library":xs) -> go xs
+                                x -> error $ "unknown section " ++ show x
+                    go sec
             "import" -> fieldPrinter (Proxy @Token') longest
+            "branch" -> fieldPrinter (Proxy @Token) longest
+            "executable" -> fieldPrinter (Proxy @Token) longest
+            "tag" -> fieldPrinter (Proxy @Token) longest
+            "test-module" -> fieldPrinter (Proxy @ModuleName) longest
             "exposed-modules" ->
                 fieldPrinter (Proxy @(List VCat (MQuoted ModuleName) _)) longest
             "other-modules" ->
                 fieldPrinter (Proxy @(List VCat (MQuoted ModuleName) _)) longest
             "default-extensions" ->
                 fieldPrinter (Proxy @(List FSep (MQuoted Extension) _)) longest
+            "extensions" ->
+                fieldPrinter (Proxy @(List FSep (MQuoted Extension) _)) longest
             "other-extensions" ->
                 fieldPrinter (Proxy @(List FSep (MQuoted Extension) _)) longest
             "hs-source-dirs" -> fieldPrinter (Proxy @(List FSep FilePathNT _)) longest
             "build-depends" ->
                 fieldPrinter (Proxy @(List CommaVCat (Identity Dependency) _)) longest
+            "build-tools" ->
+                fieldPrinter
+                    (Proxy @(List CommaFSep (Identity LegacyExeDependency) _))
+                    longest
             "setup-depends" ->
                 fieldPrinter (Proxy @(List CommaVCat (Identity Dependency) _)) longest
+            "pkgconfig-depends" ->
+                fieldPrinter
+                    (Proxy @(List CommaFSep (Identity PkgconfigDependency) _))
+                    longest
+            n
+                | "x-" `B.isPrefixOf` n -> fieldPrinter (Proxy @FreeText) longest
             x -> const (pure $ bs x)
     longest = maximum $ map (B.length . unName . fieldName) $ filter (not . isComment) fs
     unName (Name _ f) = f
@@ -117,8 +166,14 @@ docFields fs =
             | "," `B.isPrefixOf` l = string (replicate (n - 2) '‗') <> bs l
             | otherwise = string (replicate n '‗') <> bs l
 
-docArg (SecArgName _ b) = bs b
-docArg (SecArgOther _ b) = yellow (bs b)
+docArg (SecArgName _ b)
+    | b == "-any" = " -any"
+    | otherwise = bs b
+docArg (SecArgStr _ b) = dquotes (bs b)
+docArg (SecArgOther _ b)
+    | b == "||" = yellow " || "
+    | b == "&&" = yellow " && "
+    | otherwise = yellow (bs b)
 
 trail y [] = y
 trail y xs = y <$> vcat xs

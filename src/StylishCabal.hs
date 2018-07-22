@@ -15,10 +15,17 @@ import Text.PrettyPrint.ANSI.Leijen hiding ((<$>))
 
 prettyPrintFile f = do
     b <- B.readFile f
+    prettyPrintBytes b
+
+prettyPrintBytes b = do
     r <-
         runExceptT $ do
-            (sv, parsed) <- withExceptT MiscError $ parseCabalFile b
+            (sv, parsed) <- parseCabalFile b
             evalStylish (pprFields parsed) sv
     return $ renderPretty 1.0 90 <$> r
 
-doFile f = traverse_ (displayIO stdout) =<< prettyPrintFile f
+doFile f = do
+    x <- prettyPrintFile f
+    case x of
+        Right m -> displayIO stdout m
+        Left y -> print y

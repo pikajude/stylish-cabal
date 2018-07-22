@@ -25,6 +25,7 @@ library
   build-depends:      base            == 4.*
                     , Cabal           ^>= 2.3
                     , ansi-wl-pprint
+                    , microlens
                     -- a comment in a build-depends? nani??
                     , bytestring
                     , mtl
@@ -36,5 +37,5 @@ test-suite hackage
   ghc-options: -threaded
   main-is: hackage.hs
   type: exitcode-stdio-1.0
-  build-depends: base, Cabal, hspec, ansi-wl-pprint, stylish-cabal, HUnit, tar, tree-diff
+  build-depends: base, Cabal, hspec, ansi-wl-pprint, stylish-cabal, HUnit, tar, tree-diff, filepath, directory, bytestring, utf8-string
   hs-source-dirs: tests

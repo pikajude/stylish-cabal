@@ -7,25 +7,22 @@ import Control.Monad.Except
 import Control.Monad.RWS
 import qualified Data.ByteString as B
 import Distribution.CabalSpecVersion
+import Distribution.Parsec.FieldLineStream
 import qualified Text.Parsec as P
 
 type SectionName = B.ByteString
 
-type StylishT m = RWST CabalSpecVersion () (Maybe SectionName) (ExceptT StylishErr m)
+type StylishT m = RWST CabalSpecVersion () [SectionName] (ExceptT StylishErr m)
 
 data StylishErr
-    = ParseError P.ParseError
+    = ParseError (Maybe FieldLineStream, P.ParseError)
     | MiscError String
     deriving (Show)
 
 instance Exception StylishErr
 
-evalStylish b r = fst <$> evalRWST b r Nothing
+evalStylish b r = fst <$> evalRWST b r []
 
-setSectionName r = do
-    b <- get
-    case b of
-        Nothing -> put (Just r)
-        Just {} -> return ()
+pushSectionName r = modify (++ [r])
 
-clearSectionName = put Nothing
+popSectionName = modify init
