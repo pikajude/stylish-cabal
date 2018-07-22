@@ -19,6 +19,11 @@ common default-flags
   default-extensions: NoMonomorphismRestriction
   default-language: Haskell2010
 
+flag test-hackage
+  default: False
+  manual: True
+  description: Test the hackage index tarball (slow and expensive)
+
 library
   import: default-flags
   exposed-modules:    Parse Pretty StylishCabal Stylish.Class Stylish.Monad Comment
@@ -40,6 +45,8 @@ test-suite hackage
   type: exitcode-stdio-1.0
   build-depends: base, Cabal, hspec, ansi-wl-pprint, stylish-cabal, HUnit, tar, tree-diff, filepath, directory, bytestring, utf8-string
   hs-source-dirs: tests
+  if !flag(test-hackage)
+    buildable: False
 
 test-suite roundtrip
   import: default-flags
