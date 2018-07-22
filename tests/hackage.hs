@@ -41,8 +41,7 @@ hackageIndex = do
     cons' ent entries =
         case Tar.entryContent ent of
             Tar.NormalFile bs _
-                | ".cabal" `isSuffixOf` path && "c" `isPrefixOf` path ->
-                    (path, LB.toStrict bs) : entries
+                | ".cabal" `isSuffixOf` path -> (path, LB.toStrict bs) : entries
             _ -> entries
       where
         path = Tar.entryPath ent
@@ -57,8 +56,7 @@ testFile (fpath, bytes) =
                 let pd1 = packageDescription gpd1
                     pd2 = packageDescription gpd2
                 unless (pd1 == pd2) $
-                    assertFailure
-                        (show (ansiWlEditExpr $ ediff pd1 pd2))
+                    assertFailure (show (ansiWlEditExpr $ ediff pd1 pd2))
             Left x -> pendingWith (show x)
   where
     parse phase c = do

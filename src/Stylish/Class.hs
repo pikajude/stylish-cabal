@@ -28,6 +28,9 @@ import Distribution.Pretty
 import Distribution.Types.BenchmarkType
 import Distribution.Types.BuildType (BuildType)
 import Distribution.Types.Dependency
+import Distribution.Types.ForeignLib
+import Distribution.Types.ForeignLibOption
+import Distribution.Types.ForeignLibType
 import Distribution.Types.LegacyExeDependency
 import Distribution.Types.PackageName
 import Distribution.Types.SourceRepo
@@ -63,7 +66,7 @@ defaultStylish f n True (MkCommented (Just comms) x) =
         [ hardline
         , alignTo n (vcat $ map (yellow . bs) comms)
         , hardline
-        , defaultStylish f n False (MkCommented Nothing x)
+        , alignTo n (f x)
         ]
 defaultStylish f n _ (MkCommented (Just comms) x) =
     hcat [alignTo n $ vcat $ map (yellow . bs) comms, hardline, f x]
@@ -93,6 +96,8 @@ instance Stylish Extension
 
 instance Stylish BuildType
 
+instance Stylish ForeignLibOption
+
 instance Stylish TestedWith
 
 instance (Parsec a, Stylish a) => Stylish (MQuoted a) where
@@ -104,6 +109,10 @@ instance (Parsec a, Stylish a) => Stylish (Identity a) where
 instance Stylish Token'
 
 instance Stylish Token
+
+instance Stylish ForeignLibType
+
+instance Stylish LibVersionInfo
 
 instance Stylish Bool
 

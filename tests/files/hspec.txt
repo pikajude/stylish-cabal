@@ -1,0 +1,41 @@
+name:           hspec
+version:        0.5.0
+x-revision: 3
+cabal-version:  -any
+build-type:     Custom
+license:        BSD3
+license-file:   LICENSE
+copyright:      (c) 2011 Trystan Spangler
+category:       Testing
+author:         Trystan Spangler
+maintainer:     trystan.s@comcast.net
+stability:      experimental
+homepage:       https://github.com/trystan/hspec
+package-url:    https://github.com/trystan/hspec
+bug-reports:    https://github.com/trystan/hspec/issues
+synopsis:       Behavior Driven Development for Haskell
+description: Behavior Driven Development for Haskell
+             .
+             Hspec is roughly based on the Ruby library RSpec. However, Hspec is just a framework for running HUnit and QuickCheck tests. Compared to other options, it provides a much nicer syntax that makes tests very easy to read.
+
+exposed:        True
+buildable:      True
+extensions:     FlexibleInstances
+other-modules: Specs
+ghc-options: -Wall
+
+build-depends: HUnit >= 1 && < 1.3,
+               QuickCheck >=2.4.0.1 && <=2.5,
+               base >= 4 && < 4.8,
+               silently == 1.1.1,
+               ansi-terminal == 0.5.5,
+               transformers >= 0.2.0 && < 0.3.0
+
+extra-source-files: ./Specs.hs ./Test/Hspec/HUnit.hs
+                    ./Test/Hspec/Runner.hs ./Test/Hspec/Monadic.hs
+                    ./Test/Hspec/Formatters.hs
+                    ./Test/Hspec/Core.hs ./Test/Hspec/QuickCheck.hs
+
+exposed-modules: Test.Hspec Test.Hspec.HUnit Test.Hspec.Core
+                 Test.Hspec.Runner Test.Hspec.Monadic
+                 Test.Hspec.Formatters Test.Hspec.QuickCheck

@@ -20,6 +20,9 @@ import Distribution.Pretty
 import Distribution.Types.BenchmarkType
 import Distribution.Types.BuildType (BuildType)
 import Distribution.Types.Dependency (Dependency)
+import Distribution.Types.ForeignLib
+import Distribution.Types.ForeignLibOption
+import Distribution.Types.ForeignLibType
 import Distribution.Types.LegacyExeDependency
 import Distribution.Types.PackageName
 import Distribution.Types.PkgconfigDependency
@@ -81,6 +84,7 @@ docFields fs =
             "package-url" -> fieldPrinter (Proxy @FreeText) longest
             "repository" -> fieldPrinter (Proxy @FreeText) longest
             "build-type" -> fieldPrinter (Proxy @BuildType) longest
+            "lib-version-info" -> fieldPrinter (Proxy @LibVersionInfo) longest
             "extra-source-files" -> fieldPrinter (Proxy @(List VCat FilePathNT _)) longest
             "extra-doc-files" -> fieldPrinter (Proxy @(List VCat FilePathNT _)) longest
             "extra-tmp-files" -> fieldPrinter (Proxy @(List VCat FilePathNT _)) longest
@@ -107,6 +111,7 @@ docFields fs =
             "data-dir" -> fieldPrinter (Proxy @FilePathNT) longest
             "subdir" -> fieldPrinter (Proxy @FilePathNT) longest
             "buildable" -> fieldPrinter (Proxy @Bool) longest
+            "exposed" -> fieldPrinter (Proxy @Bool) longest
             "default" -> fieldPrinter (Proxy @Bool) longest
             "manual" -> fieldPrinter (Proxy @Bool) longest
             "extra-libraries" -> fieldPrinter (Proxy @(List VCat Token _)) longest
@@ -121,8 +126,11 @@ docFields fs =
                                     fieldPrinter (Proxy @RepoType) longest fls
                                 ("benchmark":_) ->
                                     fieldPrinter (Proxy @BenchmarkType) longest fls
+                                ("foreign-library":_) ->
+                                    fieldPrinter (Proxy @ForeignLibType) longest fls
                                 -- invalid section nesting, but some hackage packages do it
                                 ("library":xs) -> go xs
+                                ("executable":xs) -> go xs
                                 x -> error $ "unknown section " ++ show x
                     go sec
             "import" -> fieldPrinter (Proxy @Token') longest
@@ -149,6 +157,8 @@ docFields fs =
                     longest
             "setup-depends" ->
                 fieldPrinter (Proxy @(List CommaVCat (Identity Dependency) _)) longest
+            "options" ->
+                fieldPrinter (Proxy @(List FSep (Identity ForeignLibOption) _)) longest
             "pkgconfig-depends" ->
                 fieldPrinter
                     (Proxy @(List CommaFSep (Identity PkgconfigDependency) _))
