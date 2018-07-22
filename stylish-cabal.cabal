@@ -12,6 +12,7 @@ tested-with:        GHC == 7.4.2, GHC == 7.6.3, GHC == 7.8.4, GHC == 7.10.3, GHC
 category:           Language
 build-type:         Simple
 extra-source-files: ChangeLog.md
+                    tests/cabal-files/*
 
 common default-flags
   ghc-options: -Wall -Wcompat
@@ -38,4 +39,11 @@ test-suite hackage
   main-is: hackage.hs
   type: exitcode-stdio-1.0
   build-depends: base, Cabal, hspec, ansi-wl-pprint, stylish-cabal, HUnit, tar, tree-diff, filepath, directory, bytestring, utf8-string
+  hs-source-dirs: tests
+
+test-suite roundtrip
+  import: default-flags
+  main-is: roundtrip.hs
+  type: exitcode-stdio-1.0
+  build-depends: base, hspec, stylish-cabal, tree-diff, Cabal, ansi-wl-pprint, utf8-string, HUnit, bytestring, directory, filepath
   hs-source-dirs: tests

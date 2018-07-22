@@ -180,10 +180,14 @@ docArg (SecArgName _ b)
     | b == "-any" = " -any"
     | otherwise = bs b
 docArg (SecArgStr _ b) = dquotes (bs b)
-docArg (SecArgOther _ b)
-    | b == "||" = yellow " || "
-    | b == "&&" = yellow " && "
-    | otherwise = yellow (bs b)
+docArg (SecArgOther _ b) = yellow (bs $ replaceBS "||" " || " $ replaceBS "&&" " && " b)
+  where
+    replaceBS find' replace' bytes =
+        case B.breakSubstring find' bytes of
+            (x, y)
+                | B.null y -> x
+                | otherwise ->
+                    x <> replace' <> replaceBS find' replace' (B.drop (B.length find') y)
 
 trail y [] = y
 trail y xs = y <$> vcat xs

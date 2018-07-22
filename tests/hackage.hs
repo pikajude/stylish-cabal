@@ -25,6 +25,7 @@ import System.IO
 import Test.HUnit
 import Test.Hspec
 import Test.Hspec.Core (ResultStatus(..))
+import TestCommon
 import Text.PrettyPrint.ANSI.Leijen (SimpleDoc(..), displayS)
 
 import Instances.TreeDiff ()
@@ -46,34 +47,6 @@ hackageIndex = do
       where
         path = Tar.entryPath ent
 
-testFile (fpath, bytes) =
-    it ("roundtrips " ++ fpath) $ do
-        gpd1 <- parse "first pass" bytes
-        case runIdentity $ prettyPrintBytes bytes of
-            Right sd -> do
-                let prettyBytes = displayS (plain' sd) ""
-                gpd2 <- parse "second pass" (fromString prettyBytes)
-                let pd1 = packageDescription gpd1
-                    pd2 = packageDescription gpd2
-                unless (pd1 == pd2) $
-                    assertFailure (show (ansiWlEditExpr $ ediff pd1 pd2))
-            Left x -> pendingWith (show x)
-  where
-    parse phase c = do
-        let (_, x') = runParseResult $ parseGenericPackageDescription c
-        case x' of
-            Right gpd -> pure gpd
-            Left (_, errs) -> do
-                if phase == "first pass"
-                    then throwIO (Pending Nothing $ Just "original file does not parse")
-                    else assertFailure (unlines $ phase : map show errs)
-
 main = do
     index <- hackageIndex
     hspec $ describe "stylish-cabal" $ mapM_ testFile index
-
-plain' (SSGR _ sd) = plain' sd
-plain' (SLine n sd) = SLine n (plain' sd)
-plain' (SText n t sd) = SText n t (plain' sd)
-plain' (SChar c sd) = SChar c (plain' sd)
-plain' x = x
