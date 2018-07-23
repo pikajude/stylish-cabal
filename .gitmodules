@@ -1,0 +1,4 @@
+[submodule "vendor/Cabal"]
+	path = vendor/Cabal
+	url = https://github.com/pikajude/Cabal.git
+	branch = lex-comment
