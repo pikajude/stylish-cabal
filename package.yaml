@@ -1,0 +1,42 @@
+version: 0.5.0.0
+synopsis: Format Cabal files
+description: A tool for nicely formatting your Cabal file.
+license: BSD3
+category: Language
+extra-source-files: ChangeLog.md
+github: pikajude/stylish-cabal
+
+# common flags
+ghc-options: -Wall -Wcompat
+default-extensions: NoMonomorphismRestriction
+
+flags:
+  test-hackage:
+    default: False
+    manual: True
+    description: >-
+      Test the hackage index tarball. This is slow and expensive, thus off by default.
+
+library:
+  source-dirs: src
+  dependencies:
+    - base == 4.*
+    - Cabal >= 2.3
+    - IntervalMap
+    - ansi-wl-pprint
+    - microlens
+    - microlens-th
+    - bytestring
+    - template-haskell
+    - mtl
+    - utf8-string
+    - parsec
+
+tests:
+  hackage:
+    main: hackage.hs
+    source-dirs: tests
+    ghc-options: -threaded -with-rtsopts=-N
+    when:
+      - condition: "!flag(test-hackage)"
+        buildable: False

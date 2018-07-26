@@ -1,56 +1,67 @@
-cabal-version:      2.2
-name:               stylish-cabal
-version:            0.5.0.0
-synopsis:           Format Cabal files
-description:        A tool for nicely formatting your Cabal file.
-license:            BSD-3-Clause
-license-file:       LICENSE
-author:             Jude Taylor
-maintainer:         me@jude.xyz
-tested-with:        GHC == 7.4.2, GHC == 7.6.3, GHC == 7.8.4, GHC == 7.10.3, GHC == 8.0.2,
-                    GHC == 8.2.2, GHC == 8.4.3
-category:           Language
-build-type:         Simple
-extra-source-files: ChangeLog.md
-                    tests/cabal-files/*
+-- This file has been generated from package.yaml by hpack version 0.28.2.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: ad7f976a2f5b89350f4d2745d98ce83e2eca333bba188bda184c9d140dba5506
 
-common default-flags
-  ghc-options: -Wall -Wcompat
-  default-extensions: NoMonomorphismRestriction
-  default-language: Haskell2010
+name:           stylish-cabal
+version:        0.5.0.0
+synopsis:       Format Cabal files
+description:    A tool for nicely formatting your Cabal file.
+category:       Language
+homepage:       https://github.com/pikajude/stylish-cabal#readme
+bug-reports:    https://github.com/pikajude/stylish-cabal/issues
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+cabal-version:  >= 1.10
+extra-source-files:
+    ChangeLog.md
+
+source-repository head
+  type: git
+  location: https://github.com/pikajude/stylish-cabal
 
 flag test-hackage
-  default: False
+  description: Test the hackage index tarball. This is slow and expensive, thus off by default.
   manual: True
-  description: Test the hackage index tarball (slow and expensive)
+  default: False
 
 library
-  import: default-flags
-  exposed-modules:    Parse Pretty StylishCabal Stylish.Class Stylish.Monad Comment
-  hs-source-dirs:     src
-  build-depends:      base            == 4.*
-                    , Cabal           ^>= 2.3
-                    , ansi-wl-pprint
-                    , microlens
-                    -- a comment in a build-depends? nani??
-                    , bytestring
-                    , mtl
-                    , utf8-string
-                    , parsec
+  exposed-modules:
+      FieldValue
+      GenPrinters
+      PrintContext
+      StylishCabal
+  other-modules:
+      Paths_stylish_cabal
+  hs-source-dirs:
+      src
+  default-extensions: NoMonomorphismRestriction
+  ghc-options: -Wall -Wcompat
+  build-depends:
+      Cabal >=2.3
+    , IntervalMap
+    , ansi-wl-pprint
+    , base ==4.*
+    , bytestring
+    , microlens
+    , microlens-th
+    , mtl
+    , parsec
+    , template-haskell
+    , utf8-string
+  default-language: Haskell2010
 
 test-suite hackage
-  import: default-flags
-  ghc-options: -threaded
-  main-is: hackage.hs
   type: exitcode-stdio-1.0
-  build-depends: base, Cabal, hspec, ansi-wl-pprint, stylish-cabal, HUnit, tar, tree-diff, filepath, directory, bytestring, utf8-string
-  hs-source-dirs: tests
+  main-is: hackage.hs
+  other-modules:
+      Paths_stylish_cabal
+  hs-source-dirs:
+      tests
+  default-extensions: NoMonomorphismRestriction
+  ghc-options: -Wall -Wcompat -threaded -with-rtsopts=-N
   if !flag(test-hackage)
     buildable: False
-
-test-suite roundtrip
-  import: default-flags
-  main-is: roundtrip.hs
-  type: exitcode-stdio-1.0
-  build-depends: base, hspec, stylish-cabal, tree-diff, Cabal, ansi-wl-pprint, utf8-string, HUnit, bytestring, directory, filepath
-  hs-source-dirs: tests
+  default-language: Haskell2010
