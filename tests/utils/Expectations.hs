@@ -25,22 +25,10 @@ expectParse cabalStr = do
                 ([], Right new) = fmap sortGenericPackageDescription <$> parse' rendered
             shouldBe original new
         Warn {} ->
-            expectationFailure
-                "SKIP Warnings generated from original file, cannot guarantee consistency of output"
-        S.Error {} -> expectationFailure "SKIP Original cabal file does not parse"
+            pendingWith
+                "Warnings generated from original file, cannot guarantee consistency of output"
+        S.Error {} -> pendingWith "Original cabal file does not parse"
   where
     parse' = runParseResult . parseGenericPackageDescription
-
-applySkips i =
-    i
-        { itemExample =
-              \a b c -> do
-                  res <- itemExample i a b c
-                  case res of
-                      Right (Failure _ (Reason r))
-                          | "SKIP " `isPrefixOf` r ->
-                              pure $ Right $ Pending $ Just $ drop 5 r
-                      x -> return x
-        }
 
 mkHeader n p = "parses #" ++ show n ++ ": " ++ p
