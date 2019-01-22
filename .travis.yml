@@ -95,7 +95,7 @@ install:
 script:
   # test that source-distributions can be generated
   - (cd "." && cabal sdist)
-  - mv "."/dist/stylish-cabal-*.tar.gz ${DISTDIR}/
+  - mv "."/dist-newstyle/sdist/stylish-cabal-*.tar.gz ${DISTDIR}/
   - cd ${DISTDIR} || false
   - find . -maxdepth 1 -name '*.tar.gz' -exec tar -xvf '{}' \;
   - "printf 'packages: stylish-cabal-*/*.cabal\\n' > cabal.project"
