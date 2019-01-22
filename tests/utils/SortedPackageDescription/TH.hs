@@ -1,4 +1,3 @@
-{-# Language CPP #-}
 {-# Language DefaultSignatures #-}
 {-# Language FlexibleContexts #-}
 {-# Language FlexibleInstances #-}
@@ -7,10 +6,6 @@
 {-# Language TypeFamilies #-}
 {-# Language TypeSynonymInstances #-}
 {-# Language UndecidableInstances #-}
-
-#if __GLASGOW_HASKELL__ < 706
-{-# LANGUAGE ConstraintKinds #-}
-#endif
 
 module SortedPackageDescription.TH where
 
@@ -54,28 +49,12 @@ prim ns =
             [ instanceD
                   (cxt [])
                   [t|Sortable $(conT n)|]
-#if MIN_VERSION_template_haskell(2,9,0)
                   [ tySynInstD ''MkSortable (tySynEqn [conT n] (conT n))
-#else
-                  [ tySynInstD ''MkSortable [conT n] (conT n)
-#endif
                   , funD 'sortable [clause [] (normalB [|id|]) []]
                   ]
             ]
 
-#if MIN_VERSION_template_haskell(2,11,0)
-#define KIND_ARG _k
-#else
-#define KIND_ARG
-#endif
-
-#if MIN_VERSION_template_haskell(2,12,0)
 commonDerivClause = [derivClause Nothing [[t|Show|], [t|Ord|], [t|Eq|]]]
-#elif MIN_VERSION_template_haskell(2,11,0)
-commonDerivClause = cxt [[t|Show|], [t|Ord|], [t|Eq|]]
-#else
-commonDerivClause = [''Show, ''Ord, ''Eq]
-#endif
 
 deriveSortable :: [Name] -> DecsQ
 deriveSortable = deriveSortable_ ""
@@ -92,55 +71,37 @@ deriveSortable_ prefix ns =
             , instanceD
                   (cxt [])
                   [t|Sortable $(tyhead)|]
-#if MIN_VERSION_template_haskell(2,9,0)
                   [ tySynInstD ''MkSortable (tySynEqn [tyhead] (conT dty))
-#else
-                  [ tySynInstD ''MkSortable [tyhead] (conT dty)
-#endif
                   , funD 'sortable (mkSortableImpl prefix x)
                   ]
             ]
 
-mkSortableDataD prefix (DataD cx tyName [] KIND_ARG cons _) =
+mkSortableDataD prefix (DataD cx tyName [] _k cons _) =
     (,) newname <$>
-    dataD (pure cx) newname [] KIND_ARG (map (mkSortableCon prefix) cons) commonDerivClause
+    dataD (pure cx) newname [] _k (map (mkSortableCon prefix) cons) commonDerivClause
   where
     newname = sortedTyName prefix tyName
-mkSortableDataD prefix (NewtypeD cx tyName [] KIND_ARG con _) =
+mkSortableDataD prefix (NewtypeD cx tyName [] _k con _) =
     (,) newname <$>
-    newtypeD (pure cx) newname [] KIND_ARG (mkSortableCon prefix con) commonDerivClause
+    newtypeD (pure cx) newname [] _k (mkSortableCon prefix con) commonDerivClause
   where
     newname = sortedTyName prefix tyName
 mkSortableDataD _ x = error $ "Unhandled: mkSortableDataD " ++ show x
 
-#if MIN_VERSION_template_haskell(2,11,0)
 bangDef = bang noSourceUnpackedness noSourceStrictness
-#else
-bangDef = pure NotStrict
-#endif
 
 mkSortableCon prefix (RecC recName fields) =
     recC (sortedTyName prefix recName) (map mkSortedField fields)
   where
     mkSortedField (varname, _, varty) =
-#if MIN_VERSION_template_haskell(2,11,0)
         varBangType
             (sortedValName varname)
             (bangType bangDef [t|MkSortable $(pure varty)|])
-#else
-        varStrictType
-            (sortedValName varname)
-            (strictType bangDef [t|MkSortable $(pure varty)|])
-#endif
 mkSortableCon prefix (NormalC nm tys) =
     normalC (sortedTyName prefix nm) (map mkSortedField tys)
   where
     mkSortedField (_, varty) =
-#if MIN_VERSION_template_haskell(2,11,0)
         bangType bangDef [t|MkSortable $(pure varty)|]
-#else
-        strictType bangDef [t|MkSortable $(pure varty)|]
-#endif
 mkSortableCon _ x = error $ "Unhandled case in mkSortableCon: " ++ show x
 
 sortedTyName pref = mkName . ("MkSort" ++) . (pref ++) . nameBase
@@ -150,8 +111,8 @@ sortedValName = mkName . ("mkSort" ++) . firstToUpper . nameBase
     firstToUpper (x:xs) = toUpper x : xs
     firstToUpper [] = []
 
-mkSortableImpl pref (DataD _ _ _ KIND_ARG cons _) = map (mkSortableImplClause pref) cons
-mkSortableImpl pref (NewtypeD _ _ _ KIND_ARG con _) = [mkSortableImplClause pref con]
+mkSortableImpl pref (DataD _ _ _ _k cons _) = map (mkSortableImplClause pref) cons
+mkSortableImpl pref (NewtypeD _ _ _ _k con _) = [mkSortableImplClause pref con]
 mkSortableImpl _ x = error $ "Unhandled: mkSortableImpl " ++ show x
 
 mkSortableImplClause pref con = do

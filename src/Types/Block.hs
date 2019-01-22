@@ -1,8 +1,8 @@
 module Types.Block where
 
-import Distribution.PackageDescription
-import Prelude.Compat
-import Types.Field
+import           Distribution.PackageDescription
+import           Prelude.Compat
+import           Types.Field
 
 type File = ([Maybe Field], [Block])
 
@@ -26,4 +26,4 @@ data BlockHead
   deriving (Show)
 
 isElse Else = True
-isElse _ = False
+isElse _    = False

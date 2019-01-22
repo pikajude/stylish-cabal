@@ -29,25 +29,28 @@ module Types.Field
   , nonEmpty
   , stringField
   , ffilter
-  ) where
+  )
+where
 
-import Distribution.Compiler
-import Distribution.License
-import Distribution.ModuleName
-import qualified Distribution.SPDX as SPDX
-import Distribution.Types.Dependency
-import Distribution.Types.ExeDependency
-import Distribution.Types.ForeignLibOption
-import Distribution.Types.ForeignLibType
-import Distribution.Types.LegacyExeDependency
-import Distribution.Types.Mixin
-import Distribution.Types.ModuleReexport
-import Distribution.Types.PkgconfigDependency
-import Distribution.Version
-import Documentation.Haddock.Parser
-import Documentation.Haddock.Types (DocH, _doc)
-import Language.Haskell.Extension
-import Prelude.Compat
+import           Distribution.Compiler
+import           Distribution.License
+import           Distribution.ModuleName
+import qualified Distribution.SPDX             as SPDX
+import           Distribution.Types.Dependency
+import           Distribution.Types.ExeDependency
+import           Distribution.Types.ForeignLibOption
+import           Distribution.Types.ForeignLibType
+import           Distribution.Types.LegacyExeDependency
+import           Distribution.Types.Mixin
+import           Distribution.Types.ModuleReexport
+import           Distribution.Types.PkgconfigDependency
+import           Distribution.Version
+import           Documentation.Haddock.Parser
+import           Documentation.Haddock.Types    ( DocH
+                                                , _doc
+                                                )
+import           Language.Haskell.Extension
+import           Prelude.Compat
 
 data FieldVal
   = Dependencies [Dependency]
@@ -97,7 +100,7 @@ dependencies n as = Just $ Field n (Dependencies as)
 
 licenseField n a = Just $ Field n (License a)
 
-spdxLicenseField _ SPDX.NONE = Nothing
+spdxLicenseField _ SPDX.NONE        = Nothing
 spdxLicenseField n (SPDX.License a) = Just $ Field n (SPDXLicense a)
 
 file n a = Just $ Field n (File a)
@@ -112,9 +115,8 @@ extensions n as = Just $ Field n (Extensions as)
 
 version n a = Just $ Field n (Version a)
 
-cabalVersion _ (Right vr)
-  | vr == anyVersion = Nothing
-cabalVersion n a = Just $ Field n (CabalVersion a)
+cabalVersion _ (Right vr) | vr == anyVersion = Nothing
+cabalVersion n a                             = Just $ Field n (CabalVersion a)
 
 modules n as = Just $ Field n (Modules as)
 
@@ -122,17 +124,16 @@ module_ n a = Just $ Field n (Module a)
 
 testedField n a = Just $ Field n (TestedWith a)
 
-ffilter f g as
-  | not (f as) = Nothing
-  | otherwise = g as
+ffilter f g as | not (f as) = Nothing
+               | otherwise  = g as
 
 nonEmpty = ffilter (not . null)
 
-fieldName (Field s _) = s
+fieldName (Field s _    ) = s
 fieldName (Description _) = "description"
 
 desc [] = Nothing
-desc vs = Just (Description $ _doc $ parseParas vs)
+desc vs = Just (Description $ _doc $ parseParas Nothing vs)
 
 buildDeps [] = Nothing
 buildDeps vs = dependencies "build-depends" vs

@@ -5,14 +5,18 @@
 module Render.Options
   ( module Render.Options
   , module Control.Monad.Reader
-  ) where
+  )
+where
 
-import Control.Monad.Reader hiding (mapM)
-import Data.Data
-import Data.Default
-import GHC.Generics
-import Prelude.Compat
-import Text.PrettyPrint.ANSI.Leijen (Doc, indent, width)
+import           Control.Monad.Reader    hiding ( mapM )
+import           Data.Data
+import           Data.Default
+import           GHC.Generics
+import           Prelude.Compat
+import           Text.PrettyPrint.ANSI.Leijen   ( Doc
+                                                , indent
+                                                , width
+                                                )
 
 type Render = Reader RenderOptions
 
@@ -27,7 +31,7 @@ data RenderOptions = RenderOptions
   } deriving (Show, Eq, Generic, Typeable, Data)
 
 instance Default RenderOptions where
-  def = RenderOptions {indentSize = 2, simplifyVersions = False}
+  def = RenderOptions { indentSize = 2, simplifyVersions = False }
 
 indentM :: Doc -> Render Doc
 indentM k = do

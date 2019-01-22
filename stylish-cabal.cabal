@@ -1,13 +1,12 @@
 name:               stylish-cabal
-version:            0.4.1.0
+version:            0.5.0.0
 synopsis:           Format Cabal files
 description:        A tool for nicely formatting your Cabal file.
 license:            BSD3
 license-file:       LICENSE
 author:             Jude Taylor
 maintainer:         me@jude.xyz
-tested-with:        GHC == 7.4.2, GHC == 7.6.3, GHC == 7.8.4, GHC == 7.10.3, GHC == 8.0.2,
-                    GHC == 8.2.2, GHC == 8.4.3
+tested-with:        GHC == 8.6.3
 category:           Language
 build-type:         Simple
 extra-source-files: ChangeLog.md
@@ -31,8 +30,7 @@ flag test-hackage
 flag test-strictness
   default:     False
   manual:      True
-  description: Run the strictness testsuite. This requires the StrictCheck package which
-               is not yet on Hackage, and thus is disabled by default.
+  description: Run the strictness testsuite. (Used to verify that the entire package description is processed.)
 
 library
   exposed-modules:    StylishCabal
@@ -46,12 +44,12 @@ library
                       Types.Field
   hs-source-dirs:     src
   build-depends:      base            == 4.*
-                    , Cabal           ^>= 2.2
+                    , Cabal           ^>= 2.4
                     , ansi-wl-pprint
-                    , base-compat     == 0.10.*
+                    , base-compat     
                     , data-default
                     , deepseq
-                    , haddock-library ^>= 1.5
+                    , haddock-library ^>= 1.7
                     , microlens
                     , mtl
                     , split
@@ -59,9 +57,6 @@ library
   default-extensions: NoMonomorphismRestriction
                       NoImplicitPrelude
   ghc-options:        -Wall -fno-warn-missing-signatures
-
-  if impl(ghc < 7.6)
-    build-depends: ghc-prim
 
   if flag(werror)
     ghc-options: -Werror

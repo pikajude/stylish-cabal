@@ -10,47 +10,48 @@
 {-# Language TypeFamilies #-}
 
 module SortedPackageDescription
-    ( Sortable(..)
-    , sortGenericPackageDescription
-    , MkSortGenericPackageDescription(..)
-    ) where
+  ( Sortable(..)
+  , sortGenericPackageDescription
+  , MkSortGenericPackageDescription(..)
+  )
+where
 
-import Data.Char (isSpace)
-import Data.List (sortBy)
-import Data.List.Split
-import Data.Ord (comparing)
-import Data.Word
-import Distribution.Compiler
-import Distribution.License
-import Distribution.ModuleName
-import Distribution.PackageDescription
-import qualified Distribution.SPDX as SPDX
-import Distribution.System
-import Distribution.Types.CondTree
-import Distribution.Types.Dependency
-import Distribution.Types.ExeDependency
-import Distribution.Types.ExecutableScope
-import Distribution.Types.ForeignLib
-import Distribution.Types.ForeignLibOption
-import Distribution.Types.ForeignLibType
-import Distribution.Types.IncludeRenaming
-import Lens.Micro.TH
-import Lens.Micro
-import Distribution.Types.LegacyExeDependency
-import Distribution.Types.Mixin
-import Distribution.Types.PackageId
-import Distribution.Types.PackageName
-import Distribution.Types.PkgconfigDependency
-import Distribution.Types.PkgconfigName
-import Distribution.Types.UnqualComponentName
-import Distribution.Types.Version
-import Distribution.Types.VersionRange
-import Documentation.Haddock.Types hiding (Version)
-import Documentation.Haddock.Parser
-import Distribution.Utils.ShortText
-import Language.Haskell.Extension
-import Prelude.Compat
-import SortedPackageDescription.TH
+import           Data.Char                      ( isSpace )
+import           Data.List                      ( sortOn )
+import           Data.List.Split
+import           Data.Word
+import           Distribution.Compiler
+import           Distribution.License
+import           Distribution.ModuleName
+import           Distribution.PackageDescription
+import qualified Distribution.SPDX             as SPDX
+import           Distribution.System
+import           Distribution.Types.CondTree
+import           Distribution.Types.Dependency
+import           Distribution.Types.ExeDependency
+import           Distribution.Types.ExecutableScope
+import           Distribution.Types.ForeignLib
+import           Distribution.Types.ForeignLibOption
+import           Distribution.Types.ForeignLibType
+import           Distribution.Types.IncludeRenaming
+import           Lens.Micro.TH
+import           Lens.Micro
+import           Distribution.Types.LegacyExeDependency
+import           Distribution.Types.Mixin
+import           Distribution.Types.PackageId
+import           Distribution.Types.PackageName
+import           Distribution.Types.PkgconfigDependency
+import           Distribution.Types.PkgconfigName
+import           Distribution.Types.UnqualComponentName
+import           Distribution.Types.Version
+import           Distribution.Types.VersionRange
+import           Documentation.Haddock.Types
+                                         hiding ( Version )
+import           Documentation.Haddock.Parser
+import           Distribution.Utils.ShortText
+import           Language.Haskell.Extension
+import           Prelude.Compat
+import           SortedPackageDescription.TH
 
 deriving instance (Ord a, Ord b) => Ord (DocH a b)
 
@@ -75,53 +76,51 @@ makeLensesFor
     [("description", "descriptionL"), ("synopsis", "synopsisL")]
     ''PackageDescription
 
-sortGenericPackageDescription ::
-       GenericPackageDescription
-    -> ([DocH () String], MkSortable GenericPackageDescription)
+sortGenericPackageDescription
+  :: GenericPackageDescription
+  -> ([DocH () String], MkSortable GenericPackageDescription)
 sortGenericPackageDescription gpd = (descriptions, sortable desc)
   where
     (descriptions, desc) = extractDescs gpd
-    flagDescriptionL = lens flagDescription (\f d -> f {flagDescription = d})
+    flagDescriptionL = lens flagDescription (\f d -> f { flagDescription = d })
     extractDescs g =
-        let (dsc, gpd1) = g & (packageDescriptionL . descriptionL) <<.~ ""
-            (syn, gpd2) = gpd1 & (packageDescriptionL . synopsisL) <<.~ ""
-            (fs, gpd3) =
-                gpd2 &
-                (genPackageFlagsL . traverse) (\x -> ([x], x {flagDescription = ""}))
-            sortedFlags = sortBy (comparing flagName) fs
-         in ( map (unNl . toRegular . _doc . parseParas) $
-              dsc : syn : map flagDescription sortedFlags
-            , gpd3)
+      let
+        (dsc, gpd1) = g & (packageDescriptionL . descriptionL) <<.~ ""
+        (syn, gpd2) = gpd1 & (packageDescriptionL . synopsisL) <<.~ ""
+        (fs, gpd3) =
+          gpd2 & (genPackageFlagsL . traverse)
+            (\x -> ([x], x { flagDescription = "" }))
+        sortedFlags = sortOn flagName fs
+      in
+        ( map (unNl . toRegular . _doc . parseParas Nothing)
+        $ dsc
+        : syn
+        : map flagDescription sortedFlags
+        , gpd3
+        )
     unNl :: DocH () String -> DocH () String
     unNl (DocString s) = DocString $ unwords $ wordsBy isSpace s
-    unNl (DocEmphasis x) = DocEmphasis $ unNl x
-    unNl (DocAppend a b) = DocAppend (unNl a) (unNl b)
-    unNl (DocParagraph d) = DocParagraph $ unNl d
-    unNl (DocBold d) = DocBold (unNl d)
-    unNl (DocCodeBlock d) = DocCodeBlock $ unNl d
+    unNl (DocEmphasis x      )          = DocEmphasis $ unNl x
+    unNl (DocAppend a b      )          = DocAppend (unNl a) (unNl b)
+    unNl (DocParagraph     d )          = DocParagraph $ unNl d
+    unNl (DocBold          d )          = DocBold (unNl d)
+    unNl (DocCodeBlock     d )          = DocCodeBlock $ unNl d
     unNl (DocDefList bs) = DocDefList $ map (\(x, y) -> (unNl x, unNl y)) bs
-    unNl (DocUnorderedList b) = DocUnorderedList (map unNl b)
-    unNl (DocMonospaced d) = DocMonospaced (unNl d)
-    unNl (DocOrderedList ds) = DocOrderedList (map unNl ds)
-    unNl DocEmpty = DocEmpty
-    unNl d@DocHeader {} = d
-    unNl d@DocMathDisplay {} = d
-    unNl d@DocExamples {} = d
-    unNl d@DocPic {} = d
-    unNl (DocHyperlink (Hyperlink h l)) =
-        DocHyperlink $
-        Hyperlink
-            h
-            (map (\x ->
-                      if x == '\n'
-                          then ' '
-                          else x) <$>
-             l)
-    unNl d@DocIdentifier {} = d
-    unNl d@DocModule {} = d
-    unNl d@DocMathInline {} = d
-    unNl d@DocAName {} = d
-    unNl x = error $ show x
+    unNl (DocUnorderedList b )          = DocUnorderedList (map unNl b)
+    unNl (DocMonospaced    d )          = DocMonospaced (unNl d)
+    unNl (DocOrderedList   ds)          = DocOrderedList (map unNl ds)
+    unNl DocEmpty                       = DocEmpty
+    unNl d@DocHeader{}                  = d
+    unNl d@DocMathDisplay{}             = d
+    unNl d@DocExamples{}                = d
+    unNl d@DocPic{}                     = d
+    unNl (DocHyperlink (Hyperlink h l)) = DocHyperlink
+      $ Hyperlink h (map (\x -> if x == '\n' then ' ' else x) <$> l)
+    unNl d@DocIdentifier{} = d
+    unNl d@DocModule{}     = d
+    unNl d@DocMathInline{} = d
+    unNl d@DocAName{}      = d
+    unNl x                 = error $ show x
 
 prim [''ModuleName, ''ShortText, ''Char, ''Word64, ''PackageName, ''Int, ''Bool]
 
@@ -180,8 +179,6 @@ deriveSortable
     , ''BenchmarkInterface
     , ''BenchmarkType
     ]
-
-deriving instance Ord SourceRepo
 
 deriving instance (Ord a, Ord b, Ord c) => Ord (CondTree a b c)
 
@@ -248,12 +245,12 @@ data MkSortCondition c
                  (MkSortable (Condition c))
 
 instance Sortable a => Sortable (Condition a) where
-    type MkSortable (Condition a) = MkSortCondition a
-    sortable (Var arg) = MkSortVar (sortable arg)
-    sortable (Lit arg) = MkSortLit (sortable arg)
-    sortable (CNot arg) = MkSortCNot (sortable arg)
-    sortable (COr arg arg2) = MkSortCOr (sortable arg) (sortable arg2)
-    sortable (CAnd arg arg2) = MkSortCAnd (sortable arg) (sortable arg2)
+  type MkSortable (Condition a) = MkSortCondition a
+  sortable (Var  arg     ) = MkSortVar (sortable arg)
+  sortable (Lit  arg     ) = MkSortLit (sortable arg)
+  sortable (CNot arg     ) = MkSortCNot (sortable arg)
+  sortable (COr  arg arg2) = MkSortCOr (sortable arg) (sortable arg2)
+  sortable (CAnd arg arg2) = MkSortCAnd (sortable arg) (sortable arg2)
 
 data MkSortCondTree v c a = MkSortCondNode
     { mkSortCondTreeData :: MkSortable a
@@ -301,9 +298,9 @@ instance ( Sortable a
          , Ord (MkSortable c)
          ) =>
          Sortable (CondTree a b c) where
-    type MkSortable (CondTree a b c) = MkSortCondTree a b c
-    sortable (CondNode arg arg2 arg3) =
-        MkSortCondNode (sortable arg) (sortable arg2) (sortable arg3)
+  type MkSortable (CondTree a b c) = MkSortCondTree a b c
+  sortable (CondNode arg arg2 arg3) =
+    MkSortCondNode (sortable arg) (sortable arg2) (sortable arg3)
 
 data MkSortCondBranch v c a = MkSortCondBranch
     { mkSortCondBranchCondition :: MkSortable (Condition v)
@@ -319,8 +316,8 @@ instance ( Sortable a
          , Ord (MkSortable c)
          ) =>
          Sortable (CondBranch a b c) where
-    type MkSortable (CondBranch a b c) = MkSortCondBranch a b c
-    sortable (CondBranch arg arg2 arg3) =
-        MkSortCondBranch (sortable arg) (sortable arg2) (sortable arg3)
+  type MkSortable (CondBranch a b c) = MkSortCondBranch a b c
+  sortable (CondBranch arg arg2 arg3) =
+    MkSortCondBranch (sortable arg) (sortable arg2) (sortable arg3)
 
 deriveSortable [''GenericPackageDescription]

@@ -21,19 +21,24 @@ module StylishCabal
   , plain
   , displayIO
   , displayS
-  ) where
+  )
+where
 
-import Data.Default
-import Data.Monoid.Compat
-import Distribution.PackageDescription (GenericPackageDescription)
-import Distribution.Parsec.Common
-import Prelude.Compat
-import Text.PrettyPrint.ANSI.Leijen hiding ((<>), pretty)
+import           Data.Default
+import           Data.Monoid.Compat
+import           Distribution.PackageDescription
+                                                ( GenericPackageDescription )
+import           Distribution.Parsec.Common
+import           Prelude.Compat
+import           Text.PrettyPrint.ANSI.Leijen
+                                         hiding ( (<>)
+                                                , pretty
+                                                )
 
-import Parse
-import Render
-import Render.Options
-import Transform
+import           Parse
+import           Render
+import           Render.Options
+import           Transform
 
 -- | @pretty pkg@ produces a colorized, formatted textual representation of
 -- a given 'Distribution.PackageDescription.GenericPackageDescription',
@@ -45,7 +50,8 @@ pretty = prettyOpts def
 
 -- | 'pretty' with specified options.
 prettyOpts :: RenderOptions -> GenericPackageDescription -> Doc
-prettyOpts opts gpd = runReader (uncurry blockBodyToDoc $ toBlocks gpd) opts <> line
+prettyOpts opts gpd =
+  runReader (uncurry blockBodyToDoc $ toBlocks gpd) opts <> line
 
 -- | Render the given 'Doc' with the given width.
 render :: Int -> Doc -> SimpleDoc

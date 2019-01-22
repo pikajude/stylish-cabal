@@ -89,7 +89,7 @@ mixinsToDoc k bs
     deps lsep =
         enclose (string lsep) empty $
         hcat $
-        intersperse (hardline <> string ", ") $ map showField $ sortBy (comparing fst) bs
+        intersperse (hardline <> string ", ") $ map showField $ sortOn fst bs
     longest = maximum $ map (length . unP . fst) bs
     hasRequires = any (\(_, c) -> not (isDefaultRenaming $ includeRequiresRn c)) bs
     showField (P fName, i@IncludeRenaming {..})
@@ -130,7 +130,7 @@ buildDepsToDoc k bs
     | otherwise = fmap (\r -> colon <> indent (k - 1) r) (deps "  ")
   where
     deps lsep = do
-        fs <- mapM showField $ sortBy (comparing fst) bs
+        fs <- mapM showField $ sortOn fst bs
         return $ encloseSep (string lsep) empty (string ", ") fs
     longest = maximum $ map (length . unP . fst) bs
     showField (P fName, fieldVal)
